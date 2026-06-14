@@ -1,5 +1,7 @@
 # What's New in TR4W 4.148
 
+### Current as of release 4.148.13 (2026-06-14)
+
 *Consolidated by feature across all 4.148.x releases. Generated from RELEASE_NOTES.md — do not edit by hand; re-run the `monthly-changes` skill to refresh.*
 
 ## Radio Control
