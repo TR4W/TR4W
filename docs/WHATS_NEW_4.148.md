@@ -75,6 +75,7 @@
 
 ## Cabrillo & Log Export
 
+- **ADIF export no longer writes "Error generating my exchange" in the sent-exchange field.** Exporting your log to ADIF had been putting that error text into the sent-exchange (`STX_STRING`) of every record. The sent exchange is now exported correctly for all contests. Re-export an affected log after upgrading to clean it up. (#1049)
 - If a contest's exchange isn't handled by the Cabrillo generator, that line is now **flagged with an error marker (and logged) instead of written blank**, so it can't slip by unnoticed. (#1043)
 - **CSV export no longer writes stray duplicate lines** for skipped, deleted, or non-QSO records.
 - **Category choices match the current Cabrillo spec**: the contest category drop-downs are updated — Transmitter offers **TWO**, Mode adds **FM**, Time adds **8-HOURS**, Overlay drops OVER-50 and adds **YOUTH** and **YL**, and Station adds **DISTRIBUTED**, **ROVER-LIMITED**, **ROVER-UNLIMITED**, and **EXPLORER**. (#976)
