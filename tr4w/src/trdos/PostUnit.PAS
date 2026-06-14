@@ -1909,7 +1909,10 @@ begin
          begin
          Result := Result + EmitADIFField('SRX_STRING', string(rec.ExchString));
          if LooksLikeAState(string(rec.ExchString)) then
-            Result := Result + EmitADIFField('STATE', string(rec.ExchString))
+            begin
+            Result := Result + EmitADIFField('DXCC','291'); // Yes, hard-coded to US country ARRL code
+            Result := Result + EmitADIFField('STATE', string(rec.ExchString));
+            end
          else
             begin
             exchForGrid := rec.ExchString;
@@ -1958,17 +1961,29 @@ begin
                begin
                if rec.QTHString <> 'DX' then
                   begin
+                  if rec.QTH.CountryID = 'K' then
+                     begin
+                     Result := Result + EmitADIFField('DXCC','291'); // Yes, hard-coded to US country ARRL code    ny4i
+                     Result := Result + EMitADIFField('STATE',GetStateFromSection(rec.QTHString));
+                     end
+                  else if rec.QTH.CountryID = 'VE' then
+                     begin
+                     Result := Result + EmitADIFField('DXCC','1'); // Yes, hard-coded to VE country ARRL code    ny4i
+                     Result := Result + EMitADIFField('STATE',GetStateFromSection(rec.QTHString));
+                     end;
                   Result := Result + EmitADIFField('ARRL_SECT',
                                                    string(rec.QTHString));
                   Result := Result + EmitADIFField('CLASS',
                                                    string(rec.ceClass));
                   end;
-               // Legacy behaviour: emit an additional STX_STRING with
-               // MyFDClass + MySection.  The record then has two
-               // STX_STRING tags; the second one wins on parse.
-               Result := Result + EmitADIFField('STX_STRING',
-                                                string(MyFDClass) + ' ' +
-                                                string(MySection));
+               // No STX_STRING here (#1050).  It is already emitted once above
+               // from GetMyExchangeForExport, which builds "<class> <section>" for
+               // both FD and WFD (AE = ClassDomesticOrDXQTHExchange).  The
+               // former extra emission here produced a duplicate STX_STRING
+               // tag once the general emitter was fixed to run per-record
+               // (#1049) -- before that the general one was the broken
+               // "Error generating my exchange" default, so this explicit
+               // copy was the one that "won on parse".  Now redundant.
                end;
             ARRLSSCW, ARRLSSSSB:
                if rec.QTHString <> 'DX' then

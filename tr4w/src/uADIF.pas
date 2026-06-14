@@ -1336,16 +1336,20 @@ begin
    // ResolveSRXString below is exported as a helper for the tail
    // emitter's RST-normalizing branch.
 
-   // STATE - emit when QTHString is a 2-letter postal code, OR when this
-   // is a single-state QSO party and QTHString is a county code.
-   if (Length(rec.QTHString) = 2) and not StringHasNumber(rec.QTHString) then
-      Result := Result + EmitADIFField('STATE', string(rec.QTHString))
-   else
-      begin
-      stateForQP := GetStateForContest(rec.ceContest);
-      if (stateForQP <> '') and (rec.QTHString <> '') then
-         Result := Result + EmitADIFField('STATE', stateForQP);
-      end;
+   // STATE - only for single-state QSO parties, where the host state is
+   // known from the contest type and QTHString is a county code.
+   //
+   // We deliberately do NOT infer STATE from a bare 2-char QTHString.
+   // QTHString means different things per contest (an ARRL section, a
+   // zone, a serial, a name, ...), so a "2 letters => it's a state"
+   // heuristic mislabels section-based contests -- e.g. ARRL section
+   // 'EB' (East Bay) is not the state 'EB'.  Contest-specific STATE that
+   // must be derived (e.g. Field Day: section -> state) is emitted by the
+   // PostUnit tail emitter, which has the contest knowledge to do it
+   // correctly.  See Issue #1050.
+   stateForQP := GetStateForContest(rec.ceContest);
+   if (stateForQP <> '') and (rec.QTHString <> '') then
+      Result := Result + EmitADIFField('STATE', stateForQP);
 
    // QTH - the "default" location field.  Always emit when QTHString
    // is non-empty.  Contests that prefer GRIDSQUARE/IOTA/ARRL_SECT
