@@ -38,6 +38,8 @@ _Nothing yet._
 
 ## 4.148.x — June 2026
 
+> 📋 **See [docs/WHATS_NEW_4.148.md](docs/WHATS_NEW_4.148.md) for a consolidated, by-feature view of everything new across the 4.148.x series.**
+
 ### 4.148.12 (2026-06-14) — NY4I
 
 #### Band Map
