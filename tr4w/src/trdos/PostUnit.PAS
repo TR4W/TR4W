@@ -1857,6 +1857,17 @@ var
 begin
    Result := '';
 
+   // The legacy MY-exchange builder (GetMyExchangeForExport) and its
+   // GoodLookingQSO guard read the global TempRXData, NOT `rec`.  ExportToADIF
+   // reads every QSO into the `records` array first, which leaves TempRXData
+   // pointing at the LAST record read (typically a deleted QSO at end of log).
+   // Without re-syncing it here, GoodLookingQSO saw ceQSO_Deleted = True for
+   // every record and STX_STRING came out as "Error generating my exchange"
+   // (and serial-based exchanges would reuse the last QSO's serial).  Restore
+   // the "TempRXData is the current record" invariant the legacy helpers rely
+   // on before invoking them.
+   TempRXData := rec;
+
    // APP_TR4W_CLAIMEDQSO (Issue #750) is emitted by uADIF.EmitADIFRecord
    // -- it's a ContestExchange-sourced field, not contest-specific, and
    // round-trip tests rely on it being present without a tail emitter.
