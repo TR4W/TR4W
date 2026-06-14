@@ -40,6 +40,14 @@ _Nothing yet._
 
 > 📋 **See [docs/WHATS_NEW_4.148.md](docs/WHATS_NEW_4.148.md) for a consolidated, by-feature view of everything new across the 4.148.x series.**
 
+### 4.148.13 (2026-06-14) — NY4I
+
+#### ADIF Export
+
+- **ADIF export no longer writes "Error generating my exchange" in the sent-exchange field.** Exporting your log to ADIF had been putting that error text into the sent-exchange (`STX_STRING`) of every record. The sent exchange is now exported correctly for all contests. Re-export an affected log after upgrading to clean it up. (#1049)
+
+---
+
 ### 4.148.12 (2026-06-14) — NY4I
 
 #### Band Map
