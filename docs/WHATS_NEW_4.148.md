@@ -1,6 +1,6 @@
 # What's New in TR4W 4.148
 
-### Current as of release 4.148.13 (2026-06-14)
+### Current as of release 4.148.14 (2026-06-14)
 
 *Consolidated by feature across all 4.148.x releases. Generated from RELEASE_NOTES.md — do not edit by hand; re-run the `monthly-changes` skill to refresh.*
 
@@ -77,6 +77,8 @@
 
 ## Cabrillo & Log Export
 
+- **Field Day ADIF records no longer carry a duplicate sent-exchange tag.** ARRL Field Day and Winter Field Day exports were writing the sent exchange twice per record; now it appears once. (#1050)
+- **More accurate state in exported ADIF.** TR4W no longer guesses a station's state from a two-letter exchange, which previously mislabeled ARRL-section contests (a section like "EB" was wrongly written as state "EB"). Field Day and Winter Field Day now derive the correct state from the section (e.g. WCF → FL) and tag the country. Sweepstakes and ARRL 160 export the section only for now; their state will follow once a related section-naming fix lands (#1052).
 - **ADIF export no longer writes "Error generating my exchange" in the sent-exchange field.** Exporting your log to ADIF had been putting that error text into the sent-exchange (`STX_STRING`) of every record. The sent exchange is now exported correctly for all contests. Re-export an affected log after upgrading to clean it up. (#1049)
 - If a contest's exchange isn't handled by the Cabrillo generator, that line is now **flagged with an error marker (and logged) instead of written blank**, so it can't slip by unnoticed. (#1043)
 - **CSV export no longer writes stray duplicate lines** for skipped, deleted, or non-QSO records.
