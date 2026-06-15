@@ -975,6 +975,16 @@ begin
 
           if (Msg.HWND = wh[mweCall]) or (Msg.HWND = wh[mweExchange]) then
           begin
+            // Ctrl+= : repeat the exact characters last sent on CW (call +
+            // exchange windows, CW mode).  '=' alone is QUICK QSL KEY 2, so a
+            // bare key collides; a Ctrl combo avoids that and is dispatched
+            // here like the other WM_KEYDOWN shortcuts, then fully consumed.
+            if (Msg.wParam = 187 {VK_OEM_PLUS '='}) and (ActiveMode = CW) and
+               ((GetKeyState(VK_CONTROL) and $8000) <> 0) then
+            begin
+              RepeatLastCWMessage;
+              goto NoTransMess;
+            end;
             if Msg.wParam in [VK_F1..vk_f12] then ProcessFuntionKeys(Msg.wParam);
             if Msg.wParam = VK_F4 then goto NoTransMess;
             if Msg.wParam > 40 then goto TransMess;

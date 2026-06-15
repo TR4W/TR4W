@@ -365,6 +365,7 @@ procedure CreateQSONeedWindows;
 procedure CallWindowKeyDownProc(wParam: integer);
 procedure CallWindowKeyUpProc;
 procedure ExchangeWindowKeyDownProc(wParam: integer);
+procedure RepeatLastCWMessage;
 procedure OpenTR4WWindow(ID: WindowsType);
 procedure OpenOtherWindows;
 procedure CloseTR4WWindow(ID: WindowsType);
@@ -4078,6 +4079,22 @@ begin
 
 end;
 
+procedure RepeatLastCWMessage;
+   // '=' repeat-last-CW-message: replay the exact characters last sent on CW.
+   // Centralized so it works in both the call and exchange windows -- it is
+   // dispatched from the main message loop (tr4w.dpr), the same way the
+   // function keys are, rather than from a single window's key handler.
+begin
+   if LastCWMessage <> '' then
+      begin
+      AddStringToBuffer(LastCWMessage, CWTone);
+      if IsCWByCATActive then
+         begin
+         AddStringToBuffer(CWByCATBufferTerminator, CWTone);
+         end;
+      end;
+end;
+
 procedure CallWindowKeyDownProc(wParam: integer);
 var
   Key: Char;
@@ -4103,20 +4120,8 @@ begin
     Exit;
   end;
 
-  // '=' repeat-last-CW-message: replay the exact characters last sent on CW.
-  if (key = '=') and (ActiveMode = CW) then
-     begin
-     if LastCWMessage <> '' then
-        begin
-        AddStringToBuffer(LastCWMessage, CWTone);
-        if IsCWByCATActive then
-           begin
-           AddStringToBuffer(CWByCATBufferTerminator, CWTone);
-           end;
-        end;
-     CallWindowCharConsumed := True; // prevent WM_CHAR from inserting '=' into the call field
-     Exit;
-     end;
+  // '=' repeat-last-CW-message is handled centrally in the main message loop
+  // (tr4w.dpr WM_CHAR) so it works in both the call and exchange windows.
   // start sending now code
   if Key = StartSendingNowKey then
     if tAutoSendMode = False then
