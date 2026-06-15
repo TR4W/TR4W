@@ -40,6 +40,15 @@ _Nothing yet._
 
 > 📋 **See [docs/WHATS_NEW_4.148.md](docs/WHATS_NEW_4.148.md) for a consolidated, by-feature view of everything new across the 4.148.x series.**
 
+### 4.148.14 (2026-06-14) — NY4I
+
+#### ADIF Export
+
+- **Field Day ADIF records no longer carry a duplicate sent-exchange tag.** ARRL Field Day and Winter Field Day exports were writing the sent exchange twice per record; now it appears once. (#1050)
+- **More accurate state in exported ADIF.** TR4W no longer guesses a station's state from a two-letter exchange, which previously mislabeled ARRL-section contests (a section like "EB" was wrongly written as state "EB"). Field Day and Winter Field Day now derive the correct state from the section (e.g. WCF → FL) and tag the country. Sweepstakes and ARRL 160 export the section only for now; their state will follow once a related section-naming fix lands (#1052).
+
+---
+
 ### 4.148.13 (2026-06-14) — NY4I
 
 #### ADIF Export

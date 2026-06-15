@@ -37,6 +37,15 @@ _Nothing yet._
 
 ## 4.148.x — June 2026
 
+### 4.148.14 (2026-06-14) — NY4I
+
+#### ADIF Export (`src/trdos/PostUnit.PAS`, `src/uADIF.pas`) — Issue #1050
+
+- **Duplicate `STX_STRING` on Field Day / Winter Field Day removed**: the export tail emitted `STX_STRING` twice for FD/WFD — once from the general `GetMyExchangeForExport` path and again from an explicit `MyFDClass + ' ' + MySection` line. Both contests use `AE = ClassDomesticOrDXQTHExchange`, so the general emitter already produces the identical `"<class> <section>"`; the explicit copy was only meaningful while the general emitter returned its `'Error generating my exchange'` default (pre-#1049). Dropped the explicit emission; `ARRL_SECT` and `CLASS` retained.
+- **`STATE` is now contest-dependent, not inferred from `QTHString`**: `uADIF.EmitADIFRecord` no longer emits `STATE` from a bare 2-char `QTHString` (which mislabeled section-based contests, e.g. ARRL section `EB` → `STATE=EB`). The body emits `STATE` only for single-state QSO parties via `GetStateForContest`; FD/WFD derive `STATE` from the section (`GetStateFromSection`) and emit `DXCC` (291 US / 1 VE) in the tail; POTA emits `DXCC` when the worked exchange is a US state. ARRL-section contests other than FD/WFD (Sweepstakes, ARRL-160) emit `ARRL_SECT` only (no `STATE`) pending the canonical-section fix in #1052.
+
+---
+
 ### 4.148.13 (2026-06-14) — NY4I
 
 #### ADIF Export (`src/trdos/PostUnit.PAS`) — Issue #1049
