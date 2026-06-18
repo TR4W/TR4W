@@ -56,6 +56,9 @@ type
 
 function ReadFromSerialPort(BytesToRead: Cardinal; rig: RadioPtr): boolean;
 function ReadFromCOMPort(b: Cardinal; rig: RadioPtr): boolean;
+function ReadFromCOMPortRaw(b: Cardinal; rig: RadioPtr): boolean;
+procedure SetSerialRadioAlertState(rig: RadioPtr; alertOn: boolean);
+procedure MarkSerialRead(rig: RadioPtr; success: boolean);
 procedure pNetworkRadio(rig: RadioPtr);
 procedure pKenwood2(rig: RadioPtr);
 procedure pKenwoodNew(rig: RadioPtr);
@@ -218,6 +221,10 @@ begin
                 logger.warn('Radio Timeout 1000ms');
                 logger.warn('Buffer Bytes -' + inttostr(BytesInBuffer));
               end;
+
+            // Serial liveness indicator: bytes received => the radio answered;
+            // none within the timeout => after the grace period, mark it lost.
+            MarkSerialRead(rig, BytesInBuffer > 0);
 
             if BytesInBuffer > 0 then
                begin
@@ -3432,7 +3439,53 @@ begin
 
 end;
 
-function ReadFromCOMPort(b: Cardinal; rig: RadioPtr): boolean;
+// Serial liveness indicator: set/clear RadioDisconnected for a serial radio and
+// repaint the freq/name windows, only on a state transition.  Deliberately
+// mirrors the network-side SetRadioAlertState nested in pNetworkRadio -- kept
+// separate so this change does not touch the (battle-tested) network polling
+// path; unifying the two is a post-Field-Day cleanup.
+procedure SetSerialRadioAlertState(rig: RadioPtr; alertOn: boolean);
+begin
+   if alertOn = rig^.RadioDisconnected then Exit;   // no change -> do not repaint unnecessarily
+   rig^.RadioDisconnected := alertOn;
+   if alertOn then
+      begin
+      logger.Info('[SerialLiveness] %s -> alert color ON', [rig^.RadioName]);
+      end
+   else
+      begin
+      logger.Info('[SerialLiveness] %s -> alert color OFF', [rig^.RadioName]);
+      end;
+   if rig^.FreqWindowHandle <> 0 then
+      begin
+      Windows.InvalidateRect(rig^.FreqWindowHandle, nil, False);
+      end;
+   if rig^.RadioNameWndHandle <> 0 then
+      begin
+      Windows.InvalidateRect(rig^.RadioNameWndHandle, nil, False);
+      end;
+end;
+
+// Update the serial liveness indicator from one read attempt.  Shared by the
+// ReadFromCOMPort wrapper and pKenwood2's inline read loop so the logic lives
+// in one place.  A good read re-stamps the last-good time and clears the alert;
+// a sustained silence (no good read within the timeout) raises it.
+procedure MarkSerialRead(rig: RadioPtr; success: boolean);
+const
+   SERIAL_LIVENESS_TIMEOUT_MS = 3000;   // declare the serial radio "lost" after this much silence
+begin
+   if success then
+      begin
+      rig^.tLastValidResponse := GetTickCount;
+      SetSerialRadioAlertState(rig, False);
+      end
+   else if (GetTickCount - rig^.tLastValidResponse) > SERIAL_LIVENESS_TIMEOUT_MS then
+      begin
+      SetSerialRadioAlertState(rig, True);
+      end;
+end;
+
+function ReadFromCOMPortRaw(b: Cardinal; rig: RadioPtr): boolean;
 label
    1;
 var
@@ -3532,10 +3585,20 @@ begin
 
 end;
 
+function ReadFromCOMPort(b: Cardinal; rig: RadioPtr): boolean;
+begin
+   Result := ReadFromCOMPortRaw(b, rig);
+   // Serial liveness decorator (shared with pKenwood2's inline loop via
+   // MarkSerialRead): a good read keeps the indicator green; sustained silence
+   // turns it red.  Decorator only -- reconnect is handled elsewhere.
+   MarkSerialRead(rig, Result);
+end;
+
 procedure BeginPolling(rig: RadioPtr); stdcall;
 begin
    logger.debug('Entered BeginPolling');
    ClearRadioStatus(rig);
+   rig^.tLastValidResponse := GetTickCount;   // baseline so the liveness timer can't fire before the first poll
    Sleep(100);  // The polling thread did not start after reset?
 
    { If the radio is a network interface, we do not care what type of radio as
