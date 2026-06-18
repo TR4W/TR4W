@@ -352,8 +352,11 @@ end;
 
 procedure scWINEXEC;
 begin
-  if Windows.WinExec(@scFileName[1], SW_SHOWMINIMIZED) < 31 then
-    ShowSysErrorMessage('WINEXEC');
+   logger.Info('[scWINEXEC] Calling WinExec with %s',[scFileName]);
+   if Windows.WinExec(@scFileName[1], SW_SHOWMINIMIZED) < 31 then
+      begin
+      ShowSysErrorMessage('WINEXEC');
+      end;
 end;
 
 procedure scDISABLECW;
