@@ -1328,10 +1328,7 @@ begin
     exit;
   end;
 }
-  logger.debug('[CWThreadProc] AddCharacterToCWBuffer');
-{$IF tDebugMode}
-  AddStringToTelnetConsole('AddCharacterToCWBuffer',tstReceived);
-{$IFEND}
+  logger.debug('[CWThreadProc] AddCharacterToCWBuffer %s',[Character]);
 
   case UpCase(Character) of
     'A':

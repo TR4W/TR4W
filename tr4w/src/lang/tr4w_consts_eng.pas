@@ -98,7 +98,7 @@
   TC_IAMIN                              = '&I am in %s';
   TC_CROAT                              = 'I am in Croatia';
 //  TC_UKRSGB                             =  'UK/CD and RSGB member';
-  TC_NEWENGLANDSTATEABREVIATION         = 'Enter your New England state abreviation'#13'(ME, NH, VT, MA, CT, RI):';
+  TC_NEWENGLANDSTATEABREVIATION         = 'Enter your New England state abbreviation'#13'(ME, NH, VT, MA, CT, RI):';
   TC_ENTERTHEQTHTHATYOUWANTTOSEND       = 'Enter the QTH that you want to send:';
   TC_ENTERSTATEFORUSPROVINCEFORCANADA   = 'Enter state for U.S., province for Canada:';
   TC_ENTERYOUROBLASTID                  = 'Enter your oblast ID:';
@@ -255,7 +255,7 @@
 
   TC_NOTENOUGHINFOINEXCHANGE            = 'Not enough info in exchange!!';
   TC_IMPROPERDOMESITCQTH                = 'Improper domestic QTH!!';
-  TC_IMPROPERDOMESITCQTHORMISSINGNAME   = 'Improper domesitc QTH or missing name!!';
+  TC_IMPROPERDOMESITCQTHORMISSINGNAME   = 'Improper domestic QTH or missing name!!';
   TC_MISSINGQTHANDORNAME                = 'Missing QTH and/or name!!';
   TC_NOQSONUMBERFOUND                   = 'No QSO number found!!';
   TC_IMPROPERZONENUMBER                 = 'Improper zone number!!';
@@ -679,7 +679,7 @@
   RC_DELETELASTQSO                      = 'Delete the last QSO';
   RC_INITIALEX                          = 'Initial exchange';
   RC_TOOGLEST                           = 'Toggle sidetone';
-  RC_TOOGLEAS                           = 'Toogle autosend';
+  RC_TOOGLEAS                           = 'Toggle autosend';
   RC_BANDUP                             = 'Band Up';
   RC_BANDDOWN                           = 'Band Down';
   RC_SSBCWMODE                          = 'SSB/CW mode';

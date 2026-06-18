@@ -223,7 +223,7 @@ begin
    //localMsg                                               := Format('Adding %s to CW Buffer', [Msg]);
    //AddStringToTelnetConsole(PChar(localMsg),tstAlert);
    logger.Debug('[AddStringToBuffer] Adding (%s) to CW Buffer',[Msg]);
-   // '=' repeat-last-CW-message: record the actual expanded text being sent
+   // 'ctrl-=' repeat-last-CW-message: record the actual expanded text being sent
    // (skip the CWByCAT control sentinel, which is not on-air content).
    if CWCaptureActive and (Msg <> CWByCATBufferTerminator) then
       begin
