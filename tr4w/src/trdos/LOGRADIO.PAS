@@ -173,6 +173,7 @@ type
       FreqWindowHandle:    HWND;
       RadioNameWndHandle:  HWND;
       RadioDisconnected:   Boolean;
+      tLastValidResponse:  Cardinal;   // GetTickCount of last good serial read; drives the serial liveness indicator
       RadioName:        Str20;
       StartupCommand  : Str50;
       StartupCommandSent: Boolean;  // One-shot guard: set True after pNetworkRadio sends StartupCommand on first connect (Issue #436)
