@@ -144,6 +144,7 @@ var
    NumberOfSucceffulPolls: integer;
    i: integer;
    TempCommand: tKenwoodCommands;
+   cwByCatLock: boolean;
 const
    KenwoodPollRequests: array[tKenwoodCommands] of PChar = ('IF;', 'FA;',
       'FB;');
@@ -162,6 +163,17 @@ begin
 
    repeat
       if rig^.PollingStopRequested then Exit;
+
+      // Hold off polling while a CW-by-CAT message is being keyed, so the IF;
+      // poll flood does not step on a short KY message (e.g. ?, AGN) and stop
+      // it from keying.  CWByCAT_Sending is set in RadioObject.SendCW before the
+      // KY is written and cleared by the tmrCWByCAT timer once the message
+      // duration elapses.
+      if rig^.CWByCAT_Sending then
+         begin
+         Sleep(FreqPollRate);
+         Continue;
+         end;
 
       inc(rig^.tPollCount);
 
@@ -184,6 +196,19 @@ begin
                end;
 
             Sleep(FreqPollRate);
+
+            // Serialize the whole write+read cycle against a CW-by-CAT KY write
+            // (which takes the same lock in AddToOutputBuffer) so a poll cannot
+            // land between the KY and its reply and starve the keyer -- but ONLY
+            // when this radio is using CW-by-CAT.  For any other radio the poll
+            // path is left exactly as on master (no lock taken).  Captured once
+            // per cycle so a mid-cycle config change can't unbalance Enter/Leave.
+            cwByCatLock := rig^.CWByCAT;
+            if cwByCatLock then
+               begin
+               EnterCriticalSection(rig^.CATSerialLock);
+               end;
+            try
 
             rig.WritePollRequest(KenwoodPollRequests[PollNumber]^, 3);
             BytesInBuffer := 0;
@@ -409,6 +434,12 @@ begin
                   Windows.ZeroMemory(@rig.tBuf, 128);
 
                end;
+            finally
+               if cwByCatLock then
+                  begin
+                  LeaveCriticalSection(rig^.CATSerialLock);
+                  end;
+            end;
          end;
 
       if NumberOfSucceffulPolls = 0 then
