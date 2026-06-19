@@ -365,14 +365,14 @@ procedure wkSendAdminCommand(const Buffer);
 var
   Bytes: array[0..1] of Byte absolute Buffer;
 begin
-  logger.Debug('[wkSendAdminCommand] B1=$%s B2=$%s', [IntToHex(Bytes[0], 2), IntToHex(Bytes[1], 2)]);
+  logger.Trace('[wkSendAdminCommand] B1=$%s B2=$%s', [IntToHex(Bytes[0], 2), IntToHex(Bytes[1], 2)]);
   if WinKeyHandle = INVALID_HANDLE_VALUE then Exit;
   sWriteFile(WinKeyHandle, Buffer, 2);
 end;
 
 function wkSendByte(b: Byte): Cardinal;
 begin
-  logger.Debug('[wkSendByte] b=%s ($%s)', [string(Char(b)), IntToHex(b, 2)]);
+  logger.Trace('[wkSendByte] b=%s ($%s)', [string(Char(b)), IntToHex(b, 2)]);
   if WinKeyHandle = INVALID_HANDLE_VALUE then Exit;
   sWriteFile(WinKeyHandle, b, 1);
 {$IF K6VVA_WK_DEBUG}
@@ -388,7 +388,7 @@ function wkSendTwoBytes(B1, B2: Byte): Cardinal;
 var
   TwoBytesBuffer                        : array[0..1] of Byte;
 begin
-  logger.Debug('[wkSendTwoBytes] B1=%s ($%s) B2=%s ($%s)',
+  logger.Trace('[wkSendTwoBytes] B1=%s ($%s) B2=%s ($%s)',
                [string(Char(B1)), IntToHex(B1, 2), string(Char(B2)), IntToHex(B2, 2)]);
   if WinKeyHandle = INVALID_HANDLE_VALUE then Exit;
   TwoBytesBuffer[0] := B1;
@@ -919,7 +919,7 @@ begin
 {$IF WINKEYDEBUG}
 //  AddStringToTelnetConsole(PChar(string(c)));
 {$IFEND}
-  logger.Debug('[wkAddCharToHostBuffer] char=%s (ord=%d $%s)',
+  logger.Trace('[wkAddCharToHostBuffer] char=%s (ord=%d $%s)',
               [string(c), Ord(c), IntToHex(Ord(c), 2)]);
   wkInternalCWBuffer[wkHostBufferIndex] := c;
   inc(wkHostBufferIndex);
@@ -1045,7 +1045,7 @@ begin
 //    if wkXOFF then Exit;
 {$IFEND}
 
-    logger.Debug('[wkSendNextByteFromHostBuffer] sending char=%s (ord=%d $%s)',
+    logger.Trace('[wkSendNextByteFromHostBuffer] sending char=%s (ord=%d $%s)',
                  [string(wkInternalCWBuffer[wkHostBufferSendIndex]),
                   Ord(wkInternalCWBuffer[wkHostBufferSendIndex]),
                   IntToHex(Ord(wkInternalCWBuffer[wkHostBufferSendIndex]), 2)]);
