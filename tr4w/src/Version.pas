@@ -18,7 +18,7 @@ http://www.gnu.org/licenses/gpl-3.0.txt
 unit version;
 interface
 const
-  TR4W_CURRENTVERSION_NUMBER            = '4.148.15';
+  TR4W_CURRENTVERSION_NUMBER            = '4.148.16';
 
   TR4W_CURRENTVERSION                   = 'TR4W v.' + TR4W_CURRENTVERSION_NUMBER; //  {$IF MMTTYMODE} + '_mmtty'{$IFEND};//{$IF LANG <> 'ENG'} + ' [' + LANG + ']'{$IFEND}{$IF MMTTYMODE} + '_mmtty'{$IFEND};
 
