@@ -224,6 +224,7 @@ type
       CWByCAT:         boolean;                    // ny4i 4.44.5
       CWSpeedSync:     boolean;
       CWByCAT_Sending: boolean;                    // ny4i Issue 129
+      CATSerialLock:   TRTLCriticalSection;        // serialize a poll cycle vs a CW-by-CAT write on this radio's serial port
       UseHamLib:       boolean;
       WideCWFilter:    boolean;
       IcomFilterByte:  byte;
@@ -1456,7 +1457,24 @@ begin
   else
      begin
      logger.Trace('[AddToOutputBuffer-Serial] %s',[Buffer]);
-     WriteToCATPort(Buffer^, nNumberOfBytesToWrite);
+     // Take this radio's serial lock so the write cannot be interleaved with a
+     // poll cycle's read on the same port (closes the race where a short KY
+     // message lands inside a pKenwood2 IF; cycle and never keys) -- but ONLY
+     // when CW-by-CAT is in use on this radio.  For any other radio this is the
+     // same bare WriteToCATPort as master (and AddToOutputBuffer is only called
+     // on the main thread, so Self.CWByCAT cannot flip between Enter and Leave).
+     if Self.CWByCAT then
+        begin
+        EnterCriticalSection(Self.CATSerialLock);
+        end;
+     try
+        WriteToCATPort(Buffer^, nNumberOfBytesToWrite);
+     finally
+        if Self.CWByCAT then
+           begin
+           LeaveCriticalSection(Self.CATSerialLock);
+           end;
+     end;
      end;
 {$IFEND}
    //TLogger.GetInstance.Debug('Exiting AddToOutputBuffer');
@@ -1502,7 +1520,12 @@ begin
                end
             else
                begin
-               logger.trace(Format('[%s] Calling WriteFile to write %u bytes <%s>',[RadioName,nNumberOfBytesToWrite,debugStr]));
+               // Hex alongside the text so non-printable control bytes are visible
+               // -- e.g. the K3 keyer-abort 'KY <04>;RX;' (Chr(4)) shows as plain
+               // 'KY ;RX;' in a text-only trace, hiding the control byte entirely.
+               BinToHex(@Buffer,Buf,nLen);
+               Buf[nLen * 2] := #0;
+               logger.trace(Format('[%s] Calling WriteFile to write %u bytes <%s> hex[%s]',[RadioName,nNumberOfBytesToWrite,debugStr,Buf]));
                end;
             end;
          end;
@@ -2479,10 +2502,24 @@ begin
                   maxLen := 24;
                   pad := (Self.tCATPortType <> Network);
                   end;
-               K2, K3, KX3, K4:
+               K2:
                   begin
                   maxLen := 22; //28;
                   pad := false;
+                  end;
+               K3, KX3, K4:
+                  begin
+                  maxLen := 22; //28;
+                  // A short KY fails on the K3/KX3/K4 ONLY when it follows the
+                  // keyer-abort TR4W sends before every message ('KY <04>;RX;',
+                  // from StopSendingCW): the abort/RX transition swallows a short
+                  // following message, while >=8 chars survives it.  (tr4w.log
+                  // 2026-06-18: 'KY AGN4567;' silent, 'KY AGN45678;' keys; a
+                  // standalone 'KY ?;' from the K3 utility keys fine -- so this is
+                  // the abort window, not a radio length floor.)  Padding to maxLen
+                  // gives every message enough runway to survive the abort; under
+                  // P1=space the radio trims the trailing fill instead of keying it.
+                  pad := true;
                   end;
                end; // case
             Msg := CWByCATBuffer;
@@ -2492,6 +2529,11 @@ begin
                sLen := min(tempLen,maxLen);
                sMsg := Copy(msg,1,sLen); // Move sLen chars into sMsg;
                Delete(Msg,1,sLen); // Delete sLen characters from start of Msg
+               // Count elements on the REAL text, BEFORE any padding is appended.
+               // The trailing pad spaces are trimmed by the radio and never keyed,
+               // so counting them inflates tmrCWByCAT (a 1-char '?' padded to 22
+               // counted as 165 elements -> a bogus ~8 s CWByCAT_Sending window).
+               elements := CalculateElements(sMsg);  // ny4i Issue 153
                if pad then
                   begin
                   while length(sMsg) < maxLen do
@@ -2526,9 +2568,14 @@ begin
                   begin
                   formatStr := 'KY %s;';
                   end;
-               elements := CalculateElements(sMsg);  // ny4i Issue 153
-               logger.trace('Total CW Elements for %s = %d',[sMsg,elements]);
+               logger.trace('Total CW Elements (unpadded) = %d',[elements]);
                Self.EnableCWBYCATTimer( Round(1200 / DisplayedCodeSpeed) * elements); //ny4i Issue153 When timer fires, reset CWBYCAT_Sending
+               // Set CWByCAT_Sending BEFORE the KY command is written, so the poll
+               // thread (pKenwood2) pauses before the command goes on the wire.  Set
+               // after the write, a short message could be stepped on by an IF; poll
+               // fired in the gap and never key.
+               Self.CWByCAT_Sending := true;
+               logger.trace('Self.CWByCAT_Sending set to TRUE - Elecraft/Kenwood/Flex');
                // Flex over TCP: delegate to the factory object's cwx API.
                // Flex over serial falls through to the legacy KY path below.
                if (RadioModel = FLEX) and (Self.tNetObject <> nil) and (Self.tCATPortType = Network) then
@@ -2545,8 +2592,6 @@ begin
                      AddToOutputBuffer(addr(localMsg[1]), length(localMsg));
                   end;
                logger.trace('Adding K/E/F radio CW string to buffer');
-               Self.CWByCAT_Sending := true;
-               logger.trace('Self.CWByCAT_Sending set to TRUE - Elecraft/Kenwood/Flex');
                tempLen := length(Msg);
                end;
             CWByCATBuffer := ''; // Clear the buffer
@@ -4272,6 +4317,7 @@ begin
       //    TempRadio.ICOM_COMMAND_PTT := #255;
       TempRadio.SpeedMemory := InitialCodeSpeed;
       TempRadio.tIcomFilterWidth := 2;
+      InitializeCriticalSection(TempRadio.CATSerialLock);
 
       end;
    Radio1.RadioName := TC_RADIO1;
@@ -4285,6 +4331,11 @@ end;
 
 
 
-begin
+initialization
    InitRadios;
+
+finalization
+   DeleteCriticalSection(Radio1.CATSerialLock);
+   DeleteCriticalSection(Radio2.CATSerialLock);
+
 end.
