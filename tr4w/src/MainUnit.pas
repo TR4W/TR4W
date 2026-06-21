@@ -1652,6 +1652,135 @@ begin
   CloseHandle(h);
 end;
 
+// Issue #739: a saved window rectangle can land off-screen when the monitor it
+// was saved on is no longer present (laptop undocked, external display removed,
+// resolution lowered).  TR4W restores saved rects verbatim, so such a window
+// comes back unreachable.  Validate a rect against the CURRENT monitor layout
+// and, if it is not meaningfully visible, clamp/recenter it onto the nearest
+// monitor's work area (taskbar excluded).  Plain USER32 multi-monitor API --
+// Delphi 7 / Win32 safe, no VCL.  The multi-monitor API is imported directly
+// from user32 because this project's Windows unit does not surface it.
+const
+  TR4W_MONITOR_DEFAULTTONEAREST = $00000002;
+
+type
+  TTR4WMonitorInfo = record
+    cbSize: DWORD;
+    rcMonitor: TRect;
+    rcWork: TRect;
+    dwFlags: DWORD;
+  end;
+
+function tr4wMonitorFromRect(lprc: PRect; dwFlags: DWORD): Cardinal; stdcall;
+  external 'user32.dll' name 'MonitorFromRect';
+function tr4wGetMonitorInfo(hMonitor: Cardinal;
+  var lpmi: TTR4WMonitorInfo): BOOL; stdcall;
+  external 'user32.dll' name 'GetMonitorInfoA';
+
+type
+  TRelocInfo = record
+    Relocated: boolean;   // moved at startup because its saved monitor was absent
+    OrigRect: TRect;      // original saved rect (restore if the display returns)
+    AppliedRect: TRect;   // where we put it (to detect a later user move)
+  end;
+
+var
+  RelocState: array[WindowsType] of TRelocInfo;
+
+function PositionsMatch(const A, B: TRect): boolean;
+const
+  TOL = 5;  // px; SetWindowPos lands exactly -- allow a little slack
+begin
+  Result := (Abs(A.Left - B.Left) <= TOL) and (Abs(A.Top - B.Top) <= TOL);
+end;
+
+// Validate one saved window against the CURRENT monitor layout.  If it is not
+// meaningfully visible (its saved monitor is gone), clamp it onto the nearest
+// monitor's work area, cascaded by CascadeIndex so several recovered windows fan
+// out instead of stacking.  Records the move in RelocState so SaveTR4WPOSFILE can
+// keep the ORIGINAL rect (restoring the multi-monitor layout when the display
+// returns) unless the user moves the window this session.
+procedure EnsureRectOnScreen(Idx: WindowsType; var CascadeIndex: integer);
+const
+  MIN_VISIBLE_W = 100;
+  MIN_VISIBLE_H = 60;
+  EDGE_MARGIN = 40;
+  CASCADE_STEP = 26;
+var
+  R, OrigRect: TRect;
+  Mon: Cardinal;
+  MI: TTR4WMonitorInfo;
+  Inter: TRect;
+  W, H, ofs: integer;
+begin
+  RelocState[Idx].Relocated := False;
+  R := tr4w_WindowsArray[Idx].WndRect;
+  W := R.Right - R.Left;
+  H := R.Bottom - R.Top;
+  // Skip unset / never-saved entries (no real size); the default logic owns those.
+  if (W <= 0) or (H <= 0) then
+  begin
+    Exit;
+  end;
+
+  // Nearest monitor -- works even when the rect is entirely off-screen.
+  Mon := tr4wMonitorFromRect(@R, TR4W_MONITOR_DEFAULTTONEAREST);
+  MI.cbSize := SizeOf(MI);
+  if not tr4wGetMonitorInfo(Mon, MI) then
+  begin
+    Exit;  // Can't validate -- leave the saved rect untouched.
+  end;
+
+  // Visible enough if it overlaps the work area by at least a usable margin.
+  if IntersectRect(Inter, R, MI.rcWork)              and
+     ((Inter.Right - Inter.Left)   >= MIN_VISIBLE_W) and
+     ((Inter.Bottom - Inter.Top)   >= MIN_VISIBLE_H) then
+  begin
+    Exit;
+  end;
+
+  // Not visible: remember the original, clamp size to the work area, then move
+  // fully inside it with a per-window cascade offset.
+  OrigRect := R;
+  if W > (MI.rcWork.Right - MI.rcWork.Left) then
+  begin
+    W := MI.rcWork.Right - MI.rcWork.Left;
+  end;
+  if H > (MI.rcWork.Bottom - MI.rcWork.Top) then
+  begin
+    H := MI.rcWork.Bottom - MI.rcWork.Top;
+  end;
+
+  ofs := CascadeIndex * CASCADE_STEP;
+  R.Left := MI.rcWork.Left + EDGE_MARGIN + ofs;
+  R.Top := MI.rcWork.Top + EDGE_MARGIN + ofs;
+  // Keep it fully on the work area (also pulls the cascade tail back from edges).
+  if R.Left + W > MI.rcWork.Right then
+  begin
+    R.Left := MI.rcWork.Right - W;
+  end;
+  if R.Top + H > MI.rcWork.Bottom then
+  begin
+    R.Top := MI.rcWork.Bottom - H;
+  end;
+  if R.Left < MI.rcWork.Left then
+  begin
+    R.Left := MI.rcWork.Left;
+  end;
+  if R.Top < MI.rcWork.Top then
+  begin
+    R.Top := MI.rcWork.Top;
+  end;
+  R.Right := R.Left + W;
+  R.Bottom := R.Top + H;
+
+  tr4w_WindowsArray[Idx].WndRect := R;
+  RelocState[Idx].Relocated := True;
+  RelocState[Idx].OrigRect := OrigRect;
+  RelocState[Idx].AppliedRect := R;
+  Inc(CascadeIndex);
+end;
+
 procedure LoadTR4WPOSFILE;
 label
   1, 2;
@@ -1660,6 +1789,7 @@ var
   pNumberOfBytesRead: Cardinal;
   i: WindowsType;
   Left: integer;
+  CascadeIndex: integer;
 begin
 
 {$IF MAKE_DEFAULT_VALUES = true}
@@ -1710,6 +1840,13 @@ begin
 
     tr4w_WindowsArray[tw_NETWINDOW_INDEX].WndRect.Right := 500;
     tr4w_WindowsArray[tw_TELNETWINDOW_INDEX].WndRect.Right := 650;
+  end;
+  // Issue #739: validate every restored rect against the current monitor layout
+  // so a window saved on a now-absent monitor is pulled back on-screen (cascaded).
+  CascadeIndex := 0;
+  for i := tw_MAINWINDOW_INDEX to tw_HAMSCOREWINDOW_INDEX do
+  begin
+    EnsureRectOnScreen(i, CascadeIndex);
   end;
   for i := tw_BANDMAPWINDOW_INDEX to tw_HAMSCOREWINDOW_INDEX do
     tr4w_WindowsArray[i].WndHandle := 0;
@@ -1962,9 +2099,20 @@ begin
     TempBool := Windows.GetWindowRect(tr4w_WindowsArray[tipos].WndHandle,
       temprect);
     tr4w_WindowsArray[tipos].WndVisible := TempBool;
+    if not TempBool then Continue;
+    // Issue #739: if we relocated this window at startup because its saved
+    // monitor was absent, and the user did not move it this session, keep the
+    // ORIGINAL saved rect so reconnecting that display restores the layout.
+    if RelocState[tipos].Relocated and
+       PositionsMatch(temprect, RelocState[tipos].AppliedRect) then
+    begin
+      tr4w_WindowsArray[tipos].WndRect := RelocState[tipos].OrigRect;
+      Continue;
+    end;
     if temprect.Left >= 0 then
-      if TempBool = True then
-        tr4w_WindowsArray[tipos].WndRect := temprect;
+    begin
+      tr4w_WindowsArray[tipos].WndRect := temprect;
+    end;
   end;
 end;
 
