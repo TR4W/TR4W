@@ -1681,11 +1681,19 @@ type
   TRelocInfo = record
     Relocated: boolean;   // moved at startup because its saved monitor was absent
     OrigRect: TRect;      // original saved rect (restore if the display returns)
-    AppliedRect: TRect;   // where we put it (to detect a later user move)
   end;
 
 var
   RelocState: array[WindowsType] of TRelocInfo;
+
+const
+  // Short names for the diagnostic [SaveRect]/[EnsureRect] logging only.
+  WindowNames: array[WindowsType] of string = (
+    'Main', 'BandMap', 'DupeSheet1', 'FunctionKeys', 'Master',
+    'RemMults', 'Radio1', 'Radio2', 'Telnet', 'Network',
+    'MMTTY', 'Intercom', 'PostScores', 'Stations', 'StationsRMDX',
+    'StationsRMDOM', 'StationsRMZone', 'MP3Recorder', 'StationsRMPrefix',
+    'DupeSheet2', 'HamScore', 'Dummy11');
 
 function PositionsMatch(const A, B: TRect): boolean;
 const
@@ -1694,91 +1702,140 @@ begin
   Result := (Abs(A.Left - B.Left) <= TOL) and (Abs(A.Top - B.Top) <= TOL);
 end;
 
-// Validate one saved window against the CURRENT monitor layout.  If it is not
-// meaningfully visible (its saved monitor is gone), clamp it onto the nearest
-// monitor's work area, cascaded by CascadeIndex so several recovered windows fan
-// out instead of stacking.  Records the move in RelocState so SaveTR4WPOSFILE can
-// keep the ORIGINAL rect (restoring the multi-monitor layout when the display
-// returns) unless the user moves the window this session.
+/// <summary>
+/// Validate one saved window against the CURRENT monitor layout.
+/// </summary>
+/// <remarks>
+/// If it is not meaningfully visible (its saved monitor is gone), clamp it
+/// onto the nearest monitor's work area, cascaded by CascadeIndex so
+/// several recovered windows fan out instead of stacking.
+/// Records the move in RelocState so SaveTR4WPOSFILE can
+/// keep the ORIGINAL rect (restoring the multi-monitor layout when the display
+/// returns) unless the user moves the window this session.
+/// </remarks>
+/// <param name="Idx"> (WindowsType) Index into tr4w_WindowsArray</param>
+/// <param name="CascadeIndex"> (integer) returns next  tr4w_WindowsArray to access</param>
+
 procedure EnsureRectOnScreen(Idx: WindowsType; var CascadeIndex: integer);
 const
-  MIN_VISIBLE_W = 100;
-  MIN_VISIBLE_H = 60;
-  EDGE_MARGIN = 40;
-  CASCADE_STEP = 26;
+   MIN_VISIBLE_W = 100;
+   MIN_VISIBLE_H = 60;
+   EDGE_MARGIN = 40;
+   CASCADE_STEP = 26;
 var
-  R, OrigRect: TRect;
-  Mon: Cardinal;
-  MI: TTR4WMonitorInfo;
-  Inter: TRect;
-  W, H, ofs: integer;
+   R: TRect;
+   Mon: Cardinal;
+   MI: TTR4WMonitorInfo;
+   Inter: TRect;
+   W : integer;
+   H : integer;
+   ofs: integer;
 begin
-  RelocState[Idx].Relocated := False;
-  R := tr4w_WindowsArray[Idx].WndRect;
-  W := R.Right - R.Left;
-  H := R.Bottom - R.Top;
-  // Skip unset / never-saved entries (no real size); the default logic owns those.
-  if (W <= 0) or (H <= 0) then
-  begin
-    Exit;
-  end;
+   RelocState[Idx].Relocated := False;
+   R := tr4w_WindowsArray[Idx].WndRect;
+   W := R.Right - R.Left;
+   H := R.Bottom - R.Top;
+   // Skip unset / never-saved entries (no real size); the default logic owns those.
+   if (W <= 0) or
+      (H <= 0) then
+      begin
+      Exit;
+      end;
 
-  // Nearest monitor -- works even when the rect is entirely off-screen.
-  Mon := tr4wMonitorFromRect(@R, TR4W_MONITOR_DEFAULTTONEAREST);
-  MI.cbSize := SizeOf(MI);
-  if not tr4wGetMonitorInfo(Mon, MI) then
-  begin
-    Exit;  // Can't validate -- leave the saved rect untouched.
-  end;
+   // Nearest monitor -- works even when the rect is entirely off-screen.
+   Mon := tr4wMonitorFromRect(@R, TR4W_MONITOR_DEFAULTTONEAREST);
+   MI.cbSize := SizeOf(MI);
+   if not tr4wGetMonitorInfo(Mon, MI) then
+      begin
+      if logger.IsTraceEnabled then
+         begin
+         logger.Trace('[EnsureRect] %s (idx=%d) GetMonitorInfo FAILED -> keep saved',
+                      [WindowNames[Idx], Ord(Idx)]);
+         end;
+      Exit;  // Can't validate -- leave the saved rect untouched.
+      end;
 
-  // Visible enough if it overlaps the work area by at least a usable margin.
-  if IntersectRect(Inter, R, MI.rcWork)              and
-     ((Inter.Right - Inter.Left)   >= MIN_VISIBLE_W) and
-     ((Inter.Bottom - Inter.Top)   >= MIN_VISIBLE_H) then
-  begin
-    Exit;
-  end;
+   if logger.IsTraceEnabled then
+      begin
+      logger.Trace('[EnsureRect] %s (idx=%d) rect=(%d,%d,%d,%d) rcWork=(%d,%d,%d,%d)',
+                   [ WindowNames[Idx]
+                    ,Ord(Idx)
+                    ,R.Left
+                    ,R.Top
+                    ,R.Right
+                    ,R.Bottom
+                    ,MI.rcWork.Left
+                    ,MI.rcWork.Top
+                    ,MI.rcWork.Right
+                    ,MI.rcWork.Bottom
+                   ]);
+      end;
 
-  // Not visible: remember the original, clamp size to the work area, then move
-  // fully inside it with a per-window cascade offset.
-  OrigRect := R;
-  if W > (MI.rcWork.Right - MI.rcWork.Left) then
-  begin
-    W := MI.rcWork.Right - MI.rcWork.Left;
-  end;
-  if H > (MI.rcWork.Bottom - MI.rcWork.Top) then
-  begin
-    H := MI.rcWork.Bottom - MI.rcWork.Top;
-  end;
+   // Visible enough if it overlaps the work area by at least a usable margin.
+   if IntersectRect(Inter, R, MI.rcWork)              and
+      ((Inter.Right - Inter.Left)   >= MIN_VISIBLE_W) and
+      ((Inter.Bottom - Inter.Top)   >= MIN_VISIBLE_H) then
+      begin
+      if logger.IsTraceEnabled then
+         begin
+         logger.Trace('[EnsureRect] %s (idx=%d) KEPT (visible on this monitor)',
+                      [ WindowNames[Idx]
+                      ,Ord(Idx)
+                      ]);
+         end;
+      Exit;
+      end;
 
-  ofs := CascadeIndex * CASCADE_STEP;
-  R.Left := MI.rcWork.Left + EDGE_MARGIN + ofs;
-  R.Top := MI.rcWork.Top + EDGE_MARGIN + ofs;
-  // Keep it fully on the work area (also pulls the cascade tail back from edges).
-  if R.Left + W > MI.rcWork.Right then
-  begin
-    R.Left := MI.rcWork.Right - W;
-  end;
-  if R.Top + H > MI.rcWork.Bottom then
-  begin
-    R.Top := MI.rcWork.Bottom - H;
-  end;
-  if R.Left < MI.rcWork.Left then
-  begin
-    R.Left := MI.rcWork.Left;
-  end;
-  if R.Top < MI.rcWork.Top then
-  begin
-    R.Top := MI.rcWork.Top;
-  end;
-  R.Right := R.Left + W;
-  R.Bottom := R.Top + H;
+   // Not visible: remember the original (R is still pristine here), then clamp the
+   // size to the work area and move fully inside it with a per-window cascade offset.
+   RelocState[Idx].OrigRect := R;
+   if W > (MI.rcWork.Right - MI.rcWork.Left) then
+      begin
+      W := MI.rcWork.Right - MI.rcWork.Left;
+      end;
+   if H > (MI.rcWork.Bottom - MI.rcWork.Top) then
+      begin
+      H := MI.rcWork.Bottom - MI.rcWork.Top;
+      end;
 
-  tr4w_WindowsArray[Idx].WndRect := R;
-  RelocState[Idx].Relocated := True;
-  RelocState[Idx].OrigRect := OrigRect;
-  RelocState[Idx].AppliedRect := R;
-  Inc(CascadeIndex);
+   ofs := CascadeIndex * CASCADE_STEP;
+   R.Left := MI.rcWork.Left + EDGE_MARGIN + ofs;
+   R.Top := MI.rcWork.Top + EDGE_MARGIN + ofs;
+   // Keep it fully on the work area (also pulls the cascade tail back from edges).
+   if R.Left + W > MI.rcWork.Right then
+      begin
+      R.Left := MI.rcWork.Right - W;
+      end;
+   if R.Top + H > MI.rcWork.Bottom then
+      begin
+      R.Top := MI.rcWork.Bottom - H;
+      end;
+   if R.Left < MI.rcWork.Left then
+      begin
+      R.Left := MI.rcWork.Left;
+      end;
+   if R.Top < MI.rcWork.Top then
+      begin
+      R.Top := MI.rcWork.Top;
+      end;
+   R.Right := R.Left + W;
+   R.Bottom := R.Top + H;
+
+   tr4w_WindowsArray[Idx].WndRect := R;
+   RelocState[Idx].Relocated := True;
+   if logger.IsInfoEnabled then
+      begin
+      logger.Info('[EnsureRect] %s (idx=%d) RELOCATED to (%d,%d,%d,%d)',
+                   [ WindowNames[Idx]
+                   ,Ord(Idx)
+                   ,R.Left
+                   ,R.Top
+                   ,R.Right
+                   ,R.Bottom
+                   ]);
+      end;
+   Inc(CascadeIndex);
+
 end;
 
 procedure LoadTR4WPOSFILE;
@@ -2093,23 +2150,50 @@ var
   tipos: WindowsType;
   temprect: TRect;
   TempBool: boolean;
+  iconic: boolean;
 begin
-  for tipos := tw_MAINWINDOW_INDEX to tw_DUPESHEETWINDOW2_INDEX do
+  for tipos := tw_MAINWINDOW_INDEX to tw_HAMSCOREWINDOW_INDEX do
   begin
     TempBool := Windows.GetWindowRect(tr4w_WindowsArray[tipos].WndHandle,
       temprect);
     tr4w_WindowsArray[tipos].WndVisible := TempBool;
-    if not TempBool then Continue;
+    if not TempBool then
+    begin
+      if logger.IsTraceEnabled then
+      begin
+        logger.Trace('[SaveRect] %s (idx=%d) hWnd=%d GetWindowRect=FAIL -> keep saved',
+          [WindowNames[tipos], Ord(tipos), tr4w_WindowsArray[tipos].WndHandle]);
+      end;
+      Continue;
+    end;
+    iconic := IsIconic(tr4w_WindowsArray[tipos].WndHandle);
+    if logger.IsTraceEnabled then
+    begin
+      logger.Trace('[SaveRect] %s (idx=%d) live=(%d,%d,%d,%d) iconic=%d reloc=%d savedWndRect=(%d,%d,%d,%d)',
+        [WindowNames[tipos], Ord(tipos), temprect.Left, temprect.Top, temprect.Right, temprect.Bottom,
+         Ord(iconic), Ord(RelocState[tipos].Relocated),
+         tr4w_WindowsArray[tipos].WndRect.Left, tr4w_WindowsArray[tipos].WndRect.Top,
+         tr4w_WindowsArray[tipos].WndRect.Right, tr4w_WindowsArray[tipos].WndRect.Bottom]);
+    end;
     // Issue #739: if we relocated this window at startup because its saved
     // monitor was absent, and the user did not move it this session, keep the
     // ORIGINAL saved rect so reconnecting that display restores the layout.
     if RelocState[tipos].Relocated and
-       PositionsMatch(temprect, RelocState[tipos].AppliedRect) then
+       PositionsMatch(temprect, tr4w_WindowsArray[tipos].WndRect) then
     begin
+      if logger.IsTraceEnabled then
+      begin
+        logger.Trace('[SaveRect] %s (idx=%d) PRESERVE -> orig=(%d,%d,%d,%d)',
+          [WindowNames[tipos], Ord(tipos), RelocState[tipos].OrigRect.Left, RelocState[tipos].OrigRect.Top,
+           RelocState[tipos].OrigRect.Right, RelocState[tipos].OrigRect.Bottom]);
+      end;
       tr4w_WindowsArray[tipos].WndRect := RelocState[tipos].OrigRect;
       Continue;
     end;
-    if temprect.Left >= 0 then
+    // Issue #739: save any non-minimized position, including negative X/Y on a
+    // monitor placed left of / above the primary.  IsIconic skips only minimized
+    // windows (which report a -32000 sentinel rect).
+    if not iconic then
     begin
       tr4w_WindowsArray[tipos].WndRect := temprect;
     end;
