@@ -131,10 +131,6 @@ _Nothing yet._
 
 - The F1 send-call label shows **"Call" instead of "DE+Call" when DE is disabled** (`DE ENABLE = FALSE`). (#1012)
 
-#### CW
-
-- Press **`=` to resend exactly what you last sent** on CW.
-
 #### Display
 
 - A **stuck exchange-error message** (for example, an improper Field Day class) now clears once you log the corrected QSO. (#1030)

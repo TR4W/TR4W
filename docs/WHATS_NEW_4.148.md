@@ -1,6 +1,6 @@
 # What's New in TR4W 4.148
 
-### Current as of release 4.148.14 (2026-06-14)
+### Current as of release 4.148.17 (2026-06-22)
 
 *Consolidated by feature across all 4.148.x releases. Generated from RELEASE_NOTES.md — do not edit by hand; re-run the `monthly-changes` skill to refresh.*
 
@@ -11,6 +11,8 @@
 - **Correct default network port per radio**: when you choose a network radio type, TR4W pre-fills the right TCP port for that model (K4, FlexRadio, Kenwood TS-890/TS-990, Icom) so you don't have to look it up. (#968)
 - **Cleaner setup**: leaving a network port blank no longer throws a confusing "invalid statement" error, and a radio with no address set no longer floods the log with connection retries.
 - **The radio configuration window's Reset button now fully resets the form** — clearing the IP address and TCP port, setting keyer RTS/DTR to OFF, and restoring the radio name to its default — the **Close button is now labeled Cancel**, and closing with the **X** asks before discarding unapplied changes.
+- **CW-by-CAT now keys short messages reliably on the Elecraft K3/KX3/K4.** Sending a short CW message like `?` or `AGN` over CAT could silently fail to key on the K3; it now keys consistently. (#1057)
+- **The frequency display turns red when a serial radio goes quiet.** If a serial-connected radio stops answering CAT polling (about 3 seconds), the main-window frequency shows in red so you can see at a glance that the rig isn't responding; it clears once it answers again. (#1055)
 
 ## Radio Control — Kenwood TS-890 over LAN
 
@@ -32,8 +34,8 @@
 ## CW
 
 - Setting **`CW ENABLE = FALSE` now actually keeps CW off** from startup — the display and keying agree, with no need to toggle CW off then on (Alt-K) twice. (#1047)
-- Press **`=` to resend exactly what you last sent** on CW.
 - CW enable / disable / toggle now behaves consistently (driven by a single internal switch). (#380)
+- **The "resend last CW message" key is now Ctrl+= (was `=`).** The plain `=` key collided with Quick QSL Key 2; resend last message is now Ctrl+= while in CW mode in the call/exchange fields. (#1054)
 
 ## Digital / FT8 / WSJT-X
 
@@ -105,6 +107,10 @@
 ## Display
 
 - A **stuck exchange-error message** (for example, an improper Field Day class) now clears once you log the corrected QSO. (#1030)
+- **Windows saved on a monitor you've since disconnected now come back on-screen.** If TR4W starts and a window was on a monitor that's no longer there (laptop undocked, second display off, or resolution changed), it's brought back onto an available monitor instead of opening off-screen where you can't reach it. Several recovered windows fan out so they don't stack on top of each other. (#739)
+- **Your multi-monitor layout is preserved.** If a window is auto-recovered but you don't move it, TR4W keeps its original spot saved — so when you reconnect that monitor, the window returns to where you had it. Move a recovered window and that new position sticks instead.
+- **Windows on a monitor placed to the left of (or above) your main screen now save their position correctly** — previously those could revert to the primary monitor.
+- **Plug or unplug a monitor while TR4W is running and your windows keep up.** If a monitor disappears mid-session, any window on it moves onto an active monitor immediately — no restart needed. Plug the monitor back in and an untouched window returns to where you had it on its own; if you'd already moved a recovered window, it stays where you put it. (#1060)
 
 ## Crash Recovery
 
