@@ -10,8 +10,8 @@ This is the user-facing changelog — it covers what changed, what was fixed, an
 
 | Call | GitHub | Commits |
 |--------|--------|---------|
-| N4AF — Howie Hoyt | [@n4af](https://github.com/n4af) | 1017 |
-| NY4I — Tom Schaefer | [@ny4i](https://github.com/ny4i) | 731 |
+| NY4I — Tom Schaefer | [@ny4i](https://github.com/ny4i) | 732 |
+| N4AF — Howie Hoyt | [@n4af](https://github.com/n4af) | 346 |
 | GM0GAV — Gavin Taylor | [@gm0gav](https://github.com/gm0gav) | 12 |
 | K0TI — Dan | [@Dan-K0TI](https://github.com/Dan-K0TI) | 10 |
 | Vojtěch Šádek | [@vksadek](https://github.com/vksadek) | 1 |
