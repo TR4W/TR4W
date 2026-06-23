@@ -32,17 +32,24 @@ version number is assigned later, when a release is cut. To cut a release: renam
 user-facing — no file paths or source-level jargon.
 -->
 
-#### Window Layout
-
-- **Windows saved on a monitor you've since disconnected now come back on-screen.** If TR4W starts and a window was on a monitor that's no longer there (laptop undocked, second display off, or resolution changed), it's brought back onto an available monitor instead of opening off-screen where you can't reach it. Several recovered windows fan out so they don't stack on top of each other. (#739)
-- **Your multi-monitor layout is preserved.** If a window is auto-recovered but you don't move it, TR4W keeps its original spot saved — so when you reconnect that monitor, the window returns to where you had it. Move a recovered window and that new position sticks instead.
-- **Windows on a monitor placed to the left of (or above) your main screen now save their position correctly** — previously those could revert to the primary monitor.
+_Nothing yet._
 
 ---
 
 ## 4.148.x — June 2026
 
 > 📋 **See [docs/WHATS_NEW_4.148.md](docs/WHATS_NEW_4.148.md) for a consolidated, by-feature view of everything new across the 4.148.x series.**
+
+### 4.148.17 (2026-06-22) — NY4I
+
+#### Window Layout
+
+- **Windows saved on a monitor you've since disconnected now come back on-screen.** If TR4W starts and a window was on a monitor that's no longer there (laptop undocked, second display off, or resolution changed), it's brought back onto an available monitor instead of opening off-screen where you can't reach it. Several recovered windows fan out so they don't stack on top of each other. (#739)
+- **Your multi-monitor layout is preserved.** If a window is auto-recovered but you don't move it, TR4W keeps its original spot saved — so when you reconnect that monitor, the window returns to where you had it. Move a recovered window and that new position sticks instead.
+- **Windows on a monitor placed to the left of (or above) your main screen now save their position correctly** — previously those could revert to the primary monitor.
+- **Plug or unplug a monitor while TR4W is running and your windows keep up.** If a monitor disappears mid-session, any window on it moves onto an active monitor immediately — no restart needed. Plug the monitor back in and an untouched window returns to where you had it on its own; if you'd already moved a recovered window, it stays where you put it. (#1060)
+
+---
 
 ### 4.148.16 (2026-06-19) — NY4I
 

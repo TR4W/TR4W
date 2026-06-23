@@ -31,16 +31,26 @@ rename this "## Unreleased" to "### X.X.X (YYYY-MM-DD) — HANDLE", move it unde
 appropriate "## 4.147.x" month group below, and bump tr4w/src/Version.pas to match.
 -->
 
-### Window position restore is monitor-aware (`src/MainUnit.pas`) — Issue #739 (PR #1058, #1059)
+_Nothing yet._
+
+---
+
+## 4.148.x — June 2026
+
+### 4.148.17 (2026-06-22) — NY4I
+
+#### Window position restore is monitor-aware (`src/MainUnit.pas`) — Issue #739 (PR #1058, #1059)
 
 - **Saved window positions are validated against the current monitor layout at startup.** New `EnsureRectOnScreen` tests each restored rect (`MonitorFromRect` + `GetMonitorInfo`, imported from `user32` since Delphi 7's `Windows` unit doesn't surface the multi-monitor API) against the nearest monitor's work area. A window saved on a monitor that's no longer present (laptop undocked, external display removed, resolution lowered) is clamped back on-screen, cascaded so several recovered windows fan out rather than stack.
 - **Non-destructive to the saved layout.** A relocated window's original rect is remembered (`RelocState`); `FindAndSaveRectOfAllWindows` writes the original back on exit if the user didn't move it — so reconnecting the display restores the layout. A rescued window the user moves adopts its new position.
 - **Windows on a monitor left of / above the primary now save.** The old `if temprect.Left >= 0` save guard silently dropped negative-coordinate positions; replaced with `not IsIconic(...)` so only minimized windows (the `-32000` sentinel) are skipped.
 - **Diagnostics:** per-window `[SaveRect]`/`[EnsureRect]` logging with a window-name lookup — `RELOCATED` at INFO, the rest at TRACE, each gated by the matching `IsXEnabled` check.
 
----
+#### Live re-validation of window positions on display change (`src/MainUnit.pas`, `tr4w.dpr`) — Issue #1060 (PR #1061)
 
-## 4.148.x — June 2026
+- **Window positions are re-validated after a live monitor change, not just at startup.** The `WM_DISPLAYCHANGE` handler now calls a new `RevalidateOpenWindowsOnScreen` that walks the open, non-minimized windows and, symmetrically: rescues a window whose monitor vanished onto an active monitor; sends a previously-rescued, untouched window back to its original spot when that monitor returns; and adopts the new spot if the user moved a rescued window meanwhile. Every move uses `SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE`, so it never resizes, reorders, or steals focus. The startup visibility test was extracted into a shared `RectIsOnScreen` predicate used by both `EnsureRectOnScreen` and the re-validator. `RELOCATED`/`RESTORED` events log at INFO.
+
+---
 
 ### 4.148.16 (2026-06-19) — NY4I
 
