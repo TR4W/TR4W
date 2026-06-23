@@ -31,11 +31,44 @@ rename this "## Unreleased" to "### X.X.X (YYYY-MM-DD) — HANDLE", move it unde
 appropriate "## 4.147.x" month group below, and bump tr4w/src/Version.pas to match.
 -->
 
-_Nothing yet._
+### Window position restore is monitor-aware (`src/MainUnit.pas`) — Issue #739 (PR #1058, #1059)
+
+- **Saved window positions are validated against the current monitor layout at startup.** New `EnsureRectOnScreen` tests each restored rect (`MonitorFromRect` + `GetMonitorInfo`, imported from `user32` since Delphi 7's `Windows` unit doesn't surface the multi-monitor API) against the nearest monitor's work area. A window saved on a monitor that's no longer present (laptop undocked, external display removed, resolution lowered) is clamped back on-screen, cascaded so several recovered windows fan out rather than stack.
+- **Non-destructive to the saved layout.** A relocated window's original rect is remembered (`RelocState`); `FindAndSaveRectOfAllWindows` writes the original back on exit if the user didn't move it — so reconnecting the display restores the layout. A rescued window the user moves adopts its new position.
+- **Windows on a monitor left of / above the primary now save.** The old `if temprect.Left >= 0` save guard silently dropped negative-coordinate positions; replaced with `not IsIconic(...)` so only minimized windows (the `-32000` sentinel) are skipped.
+- **Diagnostics:** per-window `[SaveRect]`/`[EnsureRect]` logging with a window-name lookup — `RELOCATED` at INFO, the rest at TRACE, each gated by the matching `IsXEnabled` check.
 
 ---
 
 ## 4.148.x — June 2026
+
+### 4.148.16 (2026-06-19) — NY4I
+
+#### Radio Control: K3/KX3/K4 CW-by-CAT short messages (`src/trdos/LOGRADIO.PAS`, `src/uRadioPolling.pas`) — PR #1057
+
+- **Short CW-by-CAT messages (`?`, `AGN`) now key reliably on the K3/KX3/K4 over serial.** The radio accepts a short `KY` on its own, so the failure was poll/CW contention on the shared serial port — the `pKenwood2` `IF;` poll flood could step on the `KY` write. Added a per-radio serial critical section so a poll cycle and a CW write can't overlap, plus a poll-pause while a CW-by-CAT message is keying (`CWByCAT_Sending`); both gated on `CWByCAT` so non-CWByCAT / WinKeyer radios run the unchanged path. Short K3/KX3/K4 `KY` text is padded to `maxLen` (the radio trims trailing fill under P1=space) so a short message survives the keyer-abort, and CW elements are counted on the unpadded text so `tmrCWByCAT` isn't inflated. Added a hex dump in `WriteToCATPort` for the non-Icom path so control bytes (e.g. the K3 `Chr(4)` keyer-abort) are visible in traces.
+
+#### WinKeyer: byte-level logging moved to TRACE (`src/uWinKey.pas`) — PR #1057
+
+- **Per-byte WinKeyer data-exchange logs no longer flood DEBUG.** `wkSendByte`, `wkSendTwoBytes`, `wkSendAdminCommand`, `wkAddCharToHostBuffer`, and `wkSendNextByteFromHostBuffer` moved to TRACE; higher-level events (`[wkSend]` byte count, the message string, PTT status) stay at DEBUG.
+
+#### Radio Control: serial-radio liveness indicator — PR #1055
+
+- **The main-window frequency display turns red when a serial radio stops answering CAT** (~3 s timeout), and returns to normal when polling resumes — so a silent/disconnected serial rig is visible at a glance.
+
+#### Dev tooling: Pascal begin/end linter (`tr4w/build/Lint-PascalBeginEnd.ps1`)
+
+- **Added a dependency-free PowerShell linter** for the project `begin`/`end` standard (flags an `if`/`for`/`while` body missing its `begin`/`end`, and inline `then begin` / `do begin`). Exit 0 clean / 1 on violations; no effect on the application.
+
+---
+
+### 4.148.15 (2026-06-18) — NY4I
+
+#### CW: resend key moved to Ctrl+= (`src/trdos/LOGSUBS1.PAS`, `src/MainUnit.pas`) — PR #1054
+
+- **The "resend last CW message" key moved from `=` to `Ctrl+=`.** `=` collided with Quick QSL Key 2; resend is now `Ctrl+=` (`WM_KEYDOWN`, `VK_OEM_PLUS`), gated to CW mode in the call/exchange windows. Added diagnostic logging around the resend path.
+
+---
 
 ### 4.148.14 (2026-06-14) — NY4I
 
