@@ -10,8 +10,8 @@
 
 | Call | GitHub | Commits |
 |--------|--------|---------|
-| NY4I — Tom Schaefer | [@ny4i](https://github.com/ny4i) | 732 |
 | N4AF — Howie Hoyt | [@n4af](https://github.com/n4af) | 346 |
+| NY4I — Tom Schaefer | [@ny4i](https://github.com/ny4i) | 732 |
 | GM0GAV — Gavin Taylor | [@gm0gav](https://github.com/gm0gav) | 12 |
 | K0TI — Dan | [@Dan-K0TI](https://github.com/Dan-K0TI) | 10 |
 | Vojtěch Šádek | [@vksadek](https://github.com/vksadek) | 1 |
