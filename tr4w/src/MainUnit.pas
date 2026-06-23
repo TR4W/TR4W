@@ -271,6 +271,7 @@ procedure BandMapRefreshTimerProc(uTimerID, uMessage: UINT; dwUser, dw1, dw2: DW
 
 procedure SaveTR4WPOSFILE;
 procedure LoadTR4WPOSFILE;
+procedure RevalidateOpenWindowsOnScreen;
 
 procedure FrmSetFocus;
 procedure tAltE;
@@ -1702,6 +1703,34 @@ begin
   Result := (Abs(A.Left - B.Left) <= TOL) and (Abs(A.Top - B.Top) <= TOL);
 end;
 
+/// <summary>True if R is meaningfully visible on the nearest monitor's work area.</summary>
+function RectIsOnScreen(const R: TRect): boolean;
+const
+   MIN_VISIBLE_W = 100;
+   MIN_VISIBLE_H = 60;
+var
+   Mon: Cardinal;
+   MI: TTR4WMonitorInfo;
+   Inter: TRect;
+begin
+   if (R.Right - R.Left <= 0) or
+      (R.Bottom - R.Top <= 0) then
+      begin
+      Result := False;
+      Exit;
+      end;
+   Mon := tr4wMonitorFromRect(@R, TR4W_MONITOR_DEFAULTTONEAREST);
+   MI.cbSize := SizeOf(MI);
+   if not tr4wGetMonitorInfo(Mon, MI) then
+      begin
+      Result := True;   // can't validate -> treat as on-screen and leave it alone
+      Exit;
+      end;
+   Result := IntersectRect(Inter, R, MI.rcWork)             and
+             ((Inter.Right - Inter.Left)   >= MIN_VISIBLE_W) and
+             ((Inter.Bottom - Inter.Top)   >= MIN_VISIBLE_H);
+end;
+
 /// <summary>
 /// Validate one saved window against the CURRENT monitor layout.
 /// </summary>
@@ -1718,15 +1747,12 @@ end;
 
 procedure EnsureRectOnScreen(Idx: WindowsType; var CascadeIndex: integer);
 const
-   MIN_VISIBLE_W = 100;
-   MIN_VISIBLE_H = 60;
    EDGE_MARGIN = 40;
    CASCADE_STEP = 26;
 var
    R: TRect;
    Mon: Cardinal;
    MI: TTR4WMonitorInfo;
-   Inter: TRect;
    W : integer;
    H : integer;
    ofs: integer;
@@ -1772,9 +1798,7 @@ begin
       end;
 
    // Visible enough if it overlaps the work area by at least a usable margin.
-   if IntersectRect(Inter, R, MI.rcWork)              and
-      ((Inter.Right - Inter.Left)   >= MIN_VISIBLE_W) and
-      ((Inter.Bottom - Inter.Top)   >= MIN_VISIBLE_H) then
+   if RectIsOnScreen(R) then
       begin
       if logger.IsTraceEnabled then
          begin
@@ -1836,6 +1860,83 @@ begin
       end;
    Inc(CascadeIndex);
 
+end;
+
+/// <summary>
+/// Re-validate OPEN window positions after a live display-topology change
+/// (monitor added/removed, resolution change).  Symmetric:
+///   * a window whose monitor vanished is moved onto an active monitor;
+///   * a previously-rescued, untouched window whose ORIGINAL monitor has
+///     returned is sent back home;
+///   * if the user moved a rescued window meanwhile, its new spot is adopted.
+/// Every move uses SWP_NOACTIVATE | SWP_NOZORDER so focus and z-order are never
+/// disturbed during a contest.  Minimized windows are left alone.
+/// </summary>
+procedure RevalidateOpenWindowsOnScreen;
+var
+   i: WindowsType;
+   CascadeIndex: integer;
+   h: HWND;
+   live: TRect;
+begin
+   CascadeIndex := 0;
+   for i := tw_MAINWINDOW_INDEX to tw_HAMSCOREWINDOW_INDEX do
+      begin
+      h := tr4w_WindowsArray[i].WndHandle;
+      if (h = 0)            or
+         (not IsWindow(h))  or
+         IsIconic(h) then
+         begin
+         Continue;
+         end;
+      Windows.GetWindowRect(h, live);
+
+      if RelocState[i].Relocated then
+         begin
+         // Rescued on an earlier change and still flagged relocated.
+         if not PositionsMatch(live, tr4w_WindowsArray[i].WndRect) then
+            begin
+            // The user moved it since the rescue -> adopt the new spot.
+            RelocState[i].Relocated := False;
+            tr4w_WindowsArray[i].WndRect := live;
+            end
+         else if RectIsOnScreen(RelocState[i].OrigRect) then
+            begin
+            // Untouched, and its original monitor is back -> send it home.
+            tr4w_WindowsArray[i].WndRect := RelocState[i].OrigRect;
+            Windows.SetWindowPos(h, 0,
+               RelocState[i].OrigRect.Left,
+               RelocState[i].OrigRect.Top,
+               0, 0,
+               SWP_NOSIZE or SWP_NOZORDER or SWP_NOACTIVATE);
+            RelocState[i].Relocated := False;
+            if logger.IsInfoEnabled then
+               begin
+               logger.Info('[Revalidate] %s (idx=%d) RESTORED to original (%d,%d)',
+                           [ WindowNames[i]
+                           ,Ord(i)
+                           ,RelocState[i].OrigRect.Left
+                           ,RelocState[i].OrigRect.Top
+                           ]);
+               end;
+            end;
+         // else: still off-screen and untouched -> leave it rescued (OrigRect kept).
+         end
+      else
+         begin
+         // Not currently relocated: rescue it if this change pushed it off-screen.
+         tr4w_WindowsArray[i].WndRect := live;
+         EnsureRectOnScreen(i, CascadeIndex);
+         if RelocState[i].Relocated then
+            begin
+            Windows.SetWindowPos(h, 0,
+               tr4w_WindowsArray[i].WndRect.Left,
+               tr4w_WindowsArray[i].WndRect.Top,
+               0, 0,
+               SWP_NOSIZE or SWP_NOZORDER or SWP_NOACTIVATE);
+            end;
+         end;
+      end;
 end;
 
 procedure LoadTR4WPOSFILE;

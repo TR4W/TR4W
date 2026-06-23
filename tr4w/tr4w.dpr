@@ -240,7 +240,13 @@ begin
 
 //    WM_POWERBROADCAST: ShowMessage(PChar('WM_POWERBROADCAST' + IntToStr(wParam)));
 
-    WM_DISPLAYCHANGE: if wParam <= 8 then tEightBitsPerPixel := True else tEightBitsPerPixel := False;
+    WM_DISPLAYCHANGE:
+      begin
+        if wParam <= 8 then tEightBitsPerPixel := True else tEightBitsPerPixel := False;
+        // Issue #1060: a monitor was added/removed or resolution changed -- pull
+        // any now-off-screen TR4W window back onto an active monitor.
+        RevalidateOpenWindowsOnScreen;
+      end;
 
     // Issue #912: headless server-log auto-sync.  RunSyncThread (worker)
     // SendMessages here once the download is complete; we close the temp
