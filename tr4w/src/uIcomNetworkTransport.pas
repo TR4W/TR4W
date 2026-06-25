@@ -143,6 +143,7 @@ type
     // Internal - state management
     procedure SetState(NewState: TIcomConnectionState);
     function GetIsConnected: Boolean;
+    function GetCivDataFresh: Boolean;
 
     // Internal - timer callbacks
     procedure StopTimers;
@@ -190,6 +191,10 @@ type
     // Properties
     property State: TIcomConnectionState read FState;
     property IsConnected: Boolean read GetIsConnected;
+    // True while inbound CI-V data has been seen recently (the radio is actually
+    // answering).  Goes False when the radio stops responding -- the liveness
+    // signal the connectionless UDP transport otherwise lacks.  Issue #1062.
+    property CivDataFresh: Boolean read GetCivDataFresh;
     property RadioName: string read FRadioName write FRadioName;
     property CivAddress: Byte read FCivAddress;
     property OnCivData: TProcessMsgRef read FOnCivData write FOnCivData;
@@ -1567,6 +1572,18 @@ end;
 function TIcomNetworkTransport.GetIsConnected: Boolean;
 begin
   Result := (FState = icsConnected) and FCivStreamOpen;
+end;
+
+// CI-V data is the heartbeat for "the radio is actually answering".  FLastCivData
+// is stamped only by real CI-V data frames (HandleDataPacket), not by pings or
+// keepalives, so it goes stale the moment the radio stops responding (e.g. powered
+// off) even though the connectionless UDP session lingers in icsConnected.  Read
+// from the polling thread; FLastCivData is a LongWord written by the RX thread --
+// an aligned 32-bit read/write is atomic on x86, so no lock is needed.  Unsigned
+// subtraction handles GetTickCount wraparound.  Issue #1062.
+function TIcomNetworkTransport.GetCivDataFresh: Boolean;
+begin
+  Result := (GetTickCount - FLastCivData) < ICOM_CIV_OPERATIONAL_TIMEOUT_MS;
 end;
 
 // ============================================================================

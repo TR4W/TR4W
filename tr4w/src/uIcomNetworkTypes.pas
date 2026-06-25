@@ -54,6 +54,7 @@ const
   ICOM_CIV_WATCHDOG_INTERVAL     = 500;
   ICOM_CIV_TIMEOUT_THRESHOLD     = 2000;    // 2 seconds
   ICOM_PING_DEAD_TIMEOUT_MS      = 3000;    // 3 seconds without a ping -> declare link lost.  Radio sends pings every 100 ms, so 30 missed pings is unambiguous; a transient sub-3-second network glitch won't trigger a false reconnect cycle.  Was 15000 -- felt sluggish to operators turning the radio off (Issue: IC-7760 disconnect detection delay).
+  ICOM_CIV_OPERATIONAL_TIMEOUT_MS = 3000;   // No inbound CI-V data for this long => the radio is no longer answering (powered off / link lost), so report not-operational.  The polling thread queries the radio (PollRadioState) every ~500 ms and a powered radio answers each with CI-V data, so 3 s = ~6 missed poll cycles: comfortably clears an idle-but-connected radio while catching a powered-off one within a few seconds.  Drives the freq-display alert color and the UDP RadioInfo IsConnected field.  Issue #1062.
 
   // "Are You There" retry config
   ICOM_AYT_MAX_RETRIES    = 10;
