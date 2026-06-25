@@ -570,8 +570,16 @@ end;
 function TIcomRadio.GetIsOperational: boolean;
 begin
   if IsNetworkConnection then
+    // Operational requires BOTH a completed handshake (state = icsConnected)
+    // AND fresh inbound CI-V data.  Icom's UDP transport is connectionless and
+    // has no socket-close signal, so a powered-off radio leaves the session in
+    // icsConnected indefinitely (unlike the K4's TCP socket, which simply
+    // breaks).  The CI-V-freshness gate is what surfaces "radio lost" -- it
+    // drives the red freq display and the UDP RadioInfo IsConnected=False via
+    // the polling thread's SetRadioAlertState.  Issue #1062.
     Result := (FNetworkTransport <> nil) and
-              (FNetworkTransport.State = icsConnected)
+              (FNetworkTransport.State = icsConnected) and
+              FNetworkTransport.CivDataFresh
   else
     Result := inherited GetIsOperational;
 end;
