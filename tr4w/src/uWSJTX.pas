@@ -39,6 +39,7 @@ type
     tcpServ: TIdTCPServer;
     started: boolean;
     peerPort: word;
+    peerIP: string;   // source IP of the WSJT-X instance; colorization replies go here, not a hard-coded loopback
     FUDPPort: integer;
     FTCPPort: integer;
     SNR: LongInt;
@@ -388,6 +389,7 @@ begin
   //FUDP.IdUDPServer1.Bindings := '127.0.0.1:2237,[::]:2237';
   index := 0;
   peerPort := ABinding.PeerPort;
+  peerIP := ABinding.PeerIP;   // reply colorization to the instance that sent the decode (local or remote)
   newMessage := '';
   //  peerPort := 2237;
 
@@ -906,7 +908,7 @@ begin
 
   Pack(AData, true); // Highlight last only
   logger.trace('[uWSJTX] Sending command to highlight ' + Trim(sCall));
-  udpServ.SendBuffer('127.0.0.1', PeerPort, AData);
+  udpServ.SendBuffer(peerIP, PeerPort, AData);
 
 end;
 
@@ -956,7 +958,7 @@ begin
   Pack(AData, true); // Highlight last only
   logger.debug('[uWSJTX] Sending Reset Colors');
 
-  udpServ.SendBuffer('127.0.0.1', PeerPort, AData);
+  udpServ.SendBuffer(peerIP, PeerPort, AData);
 
 end;
 
