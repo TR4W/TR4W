@@ -736,8 +736,12 @@ begin
      LogEditedContactToUDP(EditableQSORxData);
      if Assigned(externalLogger) then
         begin
-        externalLogger.DeleteQSO(EditableQSORXData);
-        externalLogger.LogQSO(EditableQSORXData);
+        // Issue #957 -- an edit is a delete of the original record followed by a
+        // re-log of the edited one.  ReplaceQSO queues this as ONE atomic operation
+        // delivered off the main thread: the delete and re-log go on separate
+        // connections (DXKeeper reads one command per connection), and the re-log is
+        // sent only if the delete succeeds.  Non-blocking -- no UI freeze.
+        externalLogger.ReplaceQSO(EditableQSORXData);
         end;
      // Issue #783 -- HamScore RTC: send <contactreplace> next cycle.
      HamScoreOnEdit(EditableQSORxData);
