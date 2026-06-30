@@ -1,7 +1,8 @@
 unit uExternalLogger;
 
 interface
-uses uExternalLoggerBase, StrUtils, SysUtils, Math, TF, VC, LOGSUBS2, LogWind, LogDupe, Tree, uCFG, PostUnit;
+uses uExternalLoggerBase, StrUtils, SysUtils, Math, TF, VC, LOGSUBS2, LogWind, LogDupe, Tree, uCFG, PostUnit,
+     IdTCPClient;
 
 
 Type TExternalLogger = class(TExternalLoggerBase)
@@ -12,9 +13,10 @@ Type TExternalLogger = class(TExternalLoggerBase)
       function AddADIFField(sFieldName: string; sValue: string): string; overload;
       function AddADIFField(sFieldName: string; nValue: integer): string; overload;
 
-      // DXKeeper
-      function LogQSOToDXKeeper(ce: ContestExchange): integer;
-      function DeleteQSOToDXKeeper(ce: ContestExchange): integer; // There functions hsould be changed to an interface so we just call one based onthe interface (by log type). ny4i
+      // DXKeeper -- these now BUILD and return the DXKeeper message; the actual
+      // send is queued (one connect-per-command op on the sender thread). Issue #957.
+      function BuildDXKeeperLogMessage(ce: ContestExchange): string;
+      function BuildDXKeeperDeleteMessage(ce: ContestExchange): string; // These functions should be changed to an interface so we just call one based on the interface (by log type). ny4i
       function LookupCallsignToDXKeeper(ce: ContestExchange): integer;
 
       // ACLog
@@ -28,6 +30,11 @@ Type TExternalLogger = class(TExternalLoggerBase)
       // Add a QueueQSO to copy the record then return to the caller. This allows the actual sending of the TCP message ot be done from a different thread to not slow down the program.
 
       // I could also generalize this into post QSO Processing and let the UDP happen from the thread too. Worth exploring the actual amont of time per QSO to send to UDP and TCP. If it is very fast, this complication may not be necessary.
+   protected
+      // DXKeeper transport: one connect -> send one command -> let DXKeeper close
+      // (its by-design model; confirmed with AA6YQ). Issue #957.
+      function DeliverCommand(const cmd: string): boolean; override;
+
    public
       Constructor Create(); overload;
       Constructor Create(logType: ExternalLoggerType{sLoggerType: string}); overload;
@@ -36,6 +43,7 @@ Type TExternalLogger = class(TExternalLoggerBase)
       procedure ProcessMessage(sMessage: string);
       function LogQSO(ce: ContestExchange): integer;
       function DeleteQSO(ce: ContestExchange): integer;
+      function ReplaceQSO(ce: ContestExchange): integer;   // Issue #957 -- edit = atomic delete + re-log
       function LookupCallsign(ce:ContestExchange): integer;
 
 end;
@@ -93,6 +101,80 @@ begin
 
 end;
 
+const
+   DXK_CONNECT_TIMEOUT_MS = 2000;   // DXKeeper is normally local; fail fast and retry
+   DXK_READ_TIMEOUT_MS    = 1000;   // bound the wait for a response / the close
+
+function TExternalLogger.DeliverCommand(const cmd: string): boolean;
+var
+   client: TIdTCPClient;
+   resp: string;
+begin
+   // Issue #957 -- DXKeeper reads exactly one command per connection, then closes
+   // (its by-design model, confirmed with AA6YQ).  So each command gets its own
+   // fresh connection: connect -> send -> read any response until DXKeeper closes.
+   // Runs on the sender thread, never the main thread.  The caller (DeliverWithRetry)
+   // handles bounded retry on failure.
+   Result := False;
+   client := TIdTCPClient.Create(nil);
+   try
+      client.Host := Self.loggerAddress;
+      client.Port := Self.loggerPort;
+      client.ConnectTimeout := DXK_CONNECT_TIMEOUT_MS;
+      client.ReadTimeout := DXK_READ_TIMEOUT_MS;
+      try
+         client.Connect;
+         try
+            client.IOHandler.WriteLn(cmd);
+            Result := True;   // the command is on the wire = success
+            logger.Debug('[DXKeeper.DeliverCommand] sent: %s', [cmd]);
+            // Best-effort: read any response until DXKeeper closes (bounded).
+            try
+               while client.Connected do
+                  begin
+                  resp := client.IOHandler.ReadLn(';', DXK_READ_TIMEOUT_MS);
+                  if client.IOHandler.ReadLnTimedout then
+                     begin
+                     Break;
+                     end;
+                  if resp <> '' then
+                     begin
+                     logger.Debug('[DXKeeper.DeliverCommand] response: %s', [resp]);
+                     Self.ProcessMessage(resp);
+                     end;
+                  end;
+            except
+               on Exception do
+                  begin
+                  // DXKeeper closing after the command is the normal/expected path.
+                  end;
+            end;
+         finally
+            try
+               if client.Connected then
+                  begin
+                  client.Disconnect;
+                  end;
+            except
+               on Exception do
+                  begin
+                  // ignore disconnect errors
+                  end;
+            end;
+         end;
+      except
+         on E: Exception do
+            begin
+            logger.Warn('[DXKeeper.DeliverCommand] %s:%d failed: %s - %s',
+                        [Self.loggerAddress, Self.loggerPort, E.ClassName, E.Message]);
+            // Result stays False unless WriteLn already succeeded -> caller retries.
+            end;
+      end;
+   finally
+      client.Free;
+   end;
+end;
+
 procedure TExternalLogger.SendToLogger(sCmd: string; sData: string);
 begin
    if not Self.IsConnected then
@@ -111,7 +193,11 @@ begin
          Result := -1;
          logger.Error('Within TExternalLogger.LogQSO, logType set to NoExternalLogger');
          end;
-      lt_DxKeeper: Result := Self.LogQSOToDXKeeper(ce);
+      lt_DxKeeper:
+         begin
+         Self.QueueSingleCommand(Self.BuildDXKeeperLogMessage(ce), 'Log ' + ce.Callsign);
+         Result := 0;
+         end;
       lt_ACLog: Result := Self.LogQSOToACLog(ce);
       lt_HRD: Result := Self.LogQSOToHRD(ce);
    end;
@@ -125,9 +211,42 @@ begin
          Result := -1;
          logger.Error('Within TExternalLogger.DeleteQSO, logType set to NoExternalLogger');
          end;
-      lt_DxKeeper: Result := Self.DeleteQSOToDXKeeper(ce);
+      lt_DxKeeper:
+         begin
+         Self.QueueSingleCommand(Self.BuildDXKeeperDeleteMessage(ce), 'Delete ' + ce.Callsign);
+         Result := 0;
+         end;
       //lt_ACLog: Result := Self.LogQSOToACLog(ce);
       //lt_HRD: Result := Self.LogQSOToHRD(ce);
+   end;
+end;
+
+function TExternalLogger.ReplaceQSO(ce: ContestExchange): integer;
+begin
+   // Issue #957 -- an edit is a delete of the original followed by a re-log of the
+   // edited QSO.  Queue it as ONE atomic replace so the re-log is sent only if the
+   // delete succeeds, and so the two never share a TCP connection (DXKeeper reads
+   // exactly one command per connection, then closes).
+   case Self.logType of
+      lt_NoExternalLogger:
+         begin
+         Result := -1;
+         logger.Error('Within TExternalLogger.ReplaceQSO, logType set to NoExternalLogger');
+         end;
+      lt_DxKeeper:
+         begin
+         Self.QueueReplace(Self.BuildDXKeeperDeleteMessage(ce),
+                           Self.BuildDXKeeperLogMessage(ce),
+                           'Replace ' + ce.Callsign);
+         Result := 0;
+         end;
+      else
+         begin
+         // Other loggers: best-effort delete then re-log (no atomic guarantee yet).
+         Self.DeleteQSO(ce);
+         Self.LogQSO(ce);
+         Result := 0;
+         end;
    end;
 end;
 
@@ -146,7 +265,7 @@ begin
 
 end;
 
-function TExternalLogger.LogQSOToDXKeeper(ce: ContestExchange): integer;
+function TExternalLogger.BuildDXKeeperLogMessage(ce: ContestExchange): string;
 var sCoreADIF: string;
     //n: integer;
     sMode: string;
@@ -279,23 +398,34 @@ This is all we need to send as we DO NOT want to send every contact to any of th
   nCoreADIFLength := length(sCoreADIF);
   sCoreADIF := '<ExternalLogADIF:' + IntToStr(nCoreADIFLength) + '>' + sCoreADIF;
   nCoreADIFLength := length(sCoreADIF); // Update to include the ExternalLogADIF field
+  // Issue #957 -- option flags for the externallog command.
+  // Enrichment + membership lookups are ON (Y): DeduceMissing, QueryCallbook,
+  // CheckOverrides, UpdateeQSL, UpdateLoTW.  These only fill in or annotate
+  // DXKeeper's local copy of the record, so they add useful data without the
+  // edit-window concern below.  (An earlier "command in progress" rejection that
+  // these appeared to trigger turned out to be a DXKeeper-side bug, since fixed.)
+  // QSL-server UPLOADS are OFF (N): UploadeQSL, UploadLoTW, UploadClubLog,
+  // UploadQRZ.  Uploading the instant the QSO is logged would leave no window to
+  // edit it first; the operator uploads later (or via DXKeeper's own workflow).
+  // NOTE: if DXKeeper's AutoUpload options are checked, the Upload* N values are
+  // not honored.
   sOptions :=   AddADIFField('DeduceMissing','Y')
               + AddADIFField('QueryCallbook','Y')
               + AddADIFField('CheckOverrides','Y')
+              + AddADIFField('UpdateeQSL','Y')
+              + AddADIFField('UpdateLoTW','Y')
               + AddADIFField('UploadeQSL','N')
               + AddADIFField('UploadLoTW','N')
               + AddADIFField('UploadClubLog','N')
-              + AddADIFField('UploadQRZ','N')     // Note if the AutoUpload options in DXkeeper are checked, this is not honored.
+              + AddADIFField('UploadQRZ','N')
               ;
   nOptionsLength := length(sOptions);
   sMessage := '<command:11>externallog<parameters:' + IntToStr(nCoreADIFLength + nOptionsLength) + '>' + sCoreADIF + sOptions;
-  logger.Debug('[TExternalLogger.LogQSO] Sending message to external logger: [%s]',[sMessage]);
-  Self.SendToLogger(sMessage);
-
+  Result := sMessage;
 end;
 
 //-------------------------------
-function TExternalLogger.DeleteQSOToDXKeeper(ce: ContestExchange): integer;
+function TExternalLogger.BuildDXKeeperDeleteMessage(ce: ContestExchange): string;
 var sCoreADIF: string;
     //n: integer;
 
@@ -323,9 +453,7 @@ begin
  // sCoreADIF := '<ExternalLogADIF:' + IntToStr(nCoreADIFLength) + '>' + sCoreADIF;
   nCoreADIFLength := length(sCoreADIF); // Update to include the ExternalLogADIF field
   sMessage := '<command:9>deleteqso<parameters:' + IntToStr(nCoreADIFLength {+ nOptionsLength}) + '>' + sCoreADIF;
-  logger.Debug('[TExternalLogger.DeleteQSO] Sending message to external logger: [%s]',[sMessage]);
-  Self.SendToLogger(sMessage);
-
+  Result := sMessage;
 end;
 
 function TExternalLogger.LookupCallsignToDXKeeper(ce: ContestExchange): integer;
