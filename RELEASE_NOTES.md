@@ -38,6 +38,8 @@ _Nothing yet._
 
 ## 4.149.x — July 2026
 
+> 📋 **See [docs/WHATS_NEW_4.149.md](docs/WHATS_NEW_4.149.md) for a consolidated, by-feature view of everything new since the 4.148.0 major release (all of 4.148.x plus 4.149.x).**
+
 ### 4.149.00 (2026-07-02) — NY4I
 
 #### Radio Control
@@ -57,7 +59,7 @@ _Nothing yet._
 
 ## 4.148.x — June 2026
 
-> 📋 **See [docs/WHATS_NEW_4.148.md](docs/WHATS_NEW_4.148.md) for a consolidated, by-feature view of everything new across the 4.148.x series.**
+> 📋 **See [docs/WHATS_NEW_4.149.md](docs/WHATS_NEW_4.149.md) for a consolidated, by-feature view of the 4.148.x series (rolled into the since-4.148.0 view).**
 
 ### 4.148.17 (2026-06-22) — NY4I
 
