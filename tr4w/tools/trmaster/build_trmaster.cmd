@@ -7,13 +7,16 @@ REM  tr4w\target\ -- copying the result into place is YOUR deploy step.
 REM
 REM  Pipeline:
 REM    1. download supercheckpartial SCP.DB (MASTER.DTA + CWops auto-download)
-REM    2. build pass 1: MASTER universe + curated seed/rosters, US/UK/CA
-REM       QRZ-verified prune  ->  identifies which calls still need names
-REM    3. QRZ name resolver fills the bare calls (cached; cheap on re-runs)
+REM    2. build pass 1: MASTER universe + curated seed/rosters + callsign-history
+REM       name files, US/UK/CA QRZ-verified prune  ->  identifies the calls that
+REM       STILL need names (history already names ~24k, so QRZ has far fewer)
+REM    3. QRZ name resolver fills the still-bare calls (cached; cheap on re-runs)
 REM    4. build pass 2: same inputs + the QRZ names  ->  TRMASTER.DTA
 REM
 REM  Inputs that carry history (back these up; see README):
 REM    seed\TRMASTER_seed.DTA                  curated names / FOC / HSC / orphans
+REM    seed\*.txt (ICWC-MST / K1USN / VE2FK)   curated on-air name files (drop
+REM                                            updated copies here monthly)
 REM    %USERPROFILE%\.publicLogProcessor\qrz_name_cache.json   accumulated QRZ names
 REM ===========================================================================
 
@@ -28,6 +31,11 @@ set "SCPDB=%WORK%\SCP.DB"
 set "NAMES=%WORK%\qrz_names.csv"
 set "QRZ_LIMIT=5000"
 set "CWOPS_URL=https://docs.google.com/spreadsheets/d/1Ew8b1WAorFRCixGRsr031atxmS0SsycvmOczS_fDqzc/export?format=csv"
+
+REM --- callsign-history name files (drop updated copies into seed\ monthly). --
+REM  Pattern order = priority (ICWC > K1USN > VE2FK); each pattern resolves to
+REM  its single newest match, so a fresh drop supersedes the prior month.
+set "HISTORY=--history-glob seed\ICWC-MST-*.txt --history-glob seed\K1USNSST-*.txt --history-glob seed\Names_VE2FK-*.txt"
 
 if not exist "%WORK%" mkdir "%WORK%"
 
@@ -46,7 +54,7 @@ curl -sL --fail -o "%SCPDB%" https://supercheckpartial.com/downloads/SCP.DB || g
 REM --- 2. first build (downloads MASTER.DTA + CWops; --force = fresh) ---------
 echo [2/4] build pass 1 (universe + rosters + prune) ...
 "%PYTHON%" trmaster_build.py --out "%OUT%" --existing "%SEED%" ^
-    --download-master --force --cwops-url "%CWOPS_URL%" ^
+    --download-master --force --cwops-url "%CWOPS_URL%" %HISTORY% ^
     --prune-qrz-unverified "%SCPDB%" || goto :error
 
 REM --- 3. QRZ name resolution for the bare calls (skips cleanly if no creds) --
@@ -57,7 +65,7 @@ echo [3/4] QRZ name lookups (limit %QRZ_LIMIT%) ...
 REM --- 4. final build with names --------------------------------------------
 echo [4/4] build pass 2 (with QRZ names) ...
 "%PYTHON%" trmaster_build.py --out "%OUT%" --existing "%SEED%" ^
-    --download-master --cwops-url "%CWOPS_URL%" ^
+    --download-master --cwops-url "%CWOPS_URL%" %HISTORY% ^
     --prune-qrz-unverified "%SCPDB%" --names-csv "%NAMES%" || goto :error
 
 echo.
