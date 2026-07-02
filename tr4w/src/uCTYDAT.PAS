@@ -26,13 +26,12 @@ interface
 uses
 
   VC,
-  TF,
   uCommctrl,
   Windows,
   uCallSignRoutines,
   utils_text,
   utils_file,
-  LogGrid
+  SysUtils    // Issue #1033: StrPas for the RTL Val that replaces TF.ValExt
   ;
 {
 type
@@ -270,7 +269,85 @@ var
 
 implementation
 
-Uses MainUnit;
+// Issue #1033: uCTYDAT previously borrowed the global `logger` from MainUnit,
+// which coupled this otherwise self-contained country-lookup unit to the entire
+// application and blocked it from being linked into the unit-test EXE. Give it
+// its own Log4D logger -- the same pattern every modern unit uses (e.g.
+// uExternalLoggerFactory) -- so the unit no longer depends on MainUnit.
+uses
+   Log4D;
+
+var
+   logger: TLogLogger;
+
+// Issue #1033: local cdecl binding to wsprintfA. Delphi 7's Windows.wsprintf is
+// not declared varargs, so the former TF.Format (itself just wsprintfA) is bound
+// directly here for the one tDebugMode-only prefix-table dump below.
+function ctyDbgFmt(Output: PChar; Format: PChar; i1: integer; s: PChar; i2: integer): integer; cdecl; external 'user32.dll' name 'wsprintfA';
+
+// ---------------------------------------------------------------------------
+// Issue #1033: helpers lifted VERBATIM from TF / LogGrid so uCTYDAT no longer
+// depends on either -- both pull in MainUnit -> LogStuff and blocked uCTYDAT
+// from linking into the dependency-light unit-test EXE. Bodies are unchanged
+// (identical behavior + git blame); fold into a shared light unit during the
+// Delphi 12 refactor. See docs/tr4w-migration-strategy.md.
+// ---------------------------------------------------------------------------
+
+// Lifted from TF.PCharToInt: parse a leading (optionally '-') integer from a
+// PChar, stopping at the first non-digit.
+function PCharToInt(p: PChar): integer;
+label
+  1, 2;
+var
+  i                                     : integer;
+  Negative                              : boolean;
+begin
+  Result := 0;
+  i := 0;
+  Negative := False;
+
+  if p[i] = '-' then
+  begin
+    i := 1;
+    Negative := True;
+  end;
+
+  1:
+  if p[i] in ['0'..'9'] then Result := Result * 10 + (Ord(p[i]) - 48)
+  else goto 2;
+  inc(i);
+  goto 1;
+  2:
+  if Negative then Result := Result * -1;
+end;
+
+// Lifted from LogGrid.ConvertLatLonToGrid: Maidenhead grid from lat/lon.
+function ConvertLatLonToGrid(Lat, Lon: REAL): GridString;
+var
+  c                                     : integer;
+  G4, L4                                : REAL;
+  m1, m2, m3, m4, m5, m6                : Char;
+begin
+  G4 := 180 - Lon;
+  c := Trunc(G4 / 20);
+  m1 := CHR(c + Ord('A'));
+  G4 := G4 - c * 20;
+  c := Trunc(G4 / 2);
+  m3 := CHR(c + Ord('0'));
+  G4 := G4 - c * 2;
+  c := Trunc(G4 / (2 / 24));
+  m5 := CHR(c + Ord('A'));
+  L4 := Lat + 90;
+  c := Trunc(L4 / 10);
+  m2 := CHR(c + Ord('A'));
+  L4 := L4 - c * 10;
+  c := Trunc(L4);
+  m4 := CHR(c + Ord('0'));
+  L4 := L4 - c;
+  c := Trunc(L4 / (1 / 24));
+  m6 := CHR(c + Ord('A'));
+  ConvertLatLonToGrid := m1 + m2 + m3 + m4 + m5 + m6;
+end;
 
 procedure ctyAddNewPrefixRecord(pr: PrefixRecPtr; CheckDupe: boolean);
 var
@@ -452,17 +529,14 @@ begin
               begin
                 Windows.ZeroMemory(@b, SizeOf(b));
                 Windows.CopyMemory(@b, @p[s], l);
-                Lat := ValExt(b, code);
-                //Val(b, Lat, code);
-                //Lat := ValExt(b, code);
+                Val(StrPas(b), Lat, code);   // Issue #1033: was TF.ValExt (asm); RTL Val is equivalent for cty.dat's well-formed decimals
               end;
             cpLongitude:
               begin
 
                 Windows.ZeroMemory(@b, SizeOf(b));
                 Windows.CopyMemory(@b, @p[s], l);
-//                Val(b, Lon, code);
-                Lon := ValExt(b, code);
+                Val(StrPas(b), Lon, code);   // Issue #1033: was TF.ValExt (asm)
                 if code = 0 then r.DefaultGrid := ConvertLatLonToGrid(Lat, Lon);
               end;
 
@@ -630,7 +704,7 @@ begin
   begin
     TempPtr := PrefixRecPtr(DSA_GetItemPtr(CTY.CTYPrefixesTable, iI));
 {$IF tDebugMode}
-    sWriteFile(h, wsprintfBuffer, Format(wsprintfBuffer, '%04u %-15s %u'#13#10, iI, @TempPtr^.Prefix, TempPtr.Country));
+    sWriteFile(h, wsprintfBuffer, ctyDbgFmt(wsprintfBuffer, '%04u %-15s %u'#13#10, iI, @TempPtr^.Prefix, TempPtr.Country));
 {$IFEND}
     CTY.ctyIndexArray[TempPtr^.Prefix[0]] := iI;
 
@@ -1280,7 +1354,7 @@ begin
 
   cty.ctyR150SMode := True;
 
-  Format(TR4W_R150S_FILENAME, '%sr150s.dat', TR4W_PATH_NAME);
+  StrPCopy(TR4W_R150S_FILENAME, StrPas(TR4W_PATH_NAME) + 'r150s.dat');   // Issue #1033: was TF.Format(=wsprintfA)
   ctyLoadInCountryFile(TR4W_R150S_FILENAME, True, False);
 
 end;
@@ -1293,10 +1367,15 @@ begin
 
   cty.ctyRFOblMode := True;
 
-  Format(TR4W_rfobl_FILENAME, '%srfobl.dat', TR4W_PATH_NAME);
+  StrPCopy(TR4W_rfobl_FILENAME, StrPas(TR4W_PATH_NAME) + 'rfobl.dat');   // Issue #1033: was TF.Format(=wsprintfA)
   ctyLoadInCountryFile(TR4W_rfobl_FILENAME, True, False);
 
 end;
+
+initialization
+   // Own Log4D logger (see Issue #1033 note above) -- replaces the former
+   // MainUnit.logger borrow. GetLogger is safe before Log4D is configured.
+   logger := TLogLogger.GetLogger('uCTYDAT');
 
 end.
 

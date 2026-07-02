@@ -52,7 +52,9 @@ uses
    uFreqTimeFormat      in '..\..\src\uFreqTimeFormat.pas',
    uTestFreqTimeFormat  in 'uTestFreqTimeFormat.pas',
    uStrSearch           in '..\..\src\uStrSearch.pas',
-   uTestStrSearch       in 'uTestStrSearch.pas';
+   uTestStrSearch       in 'uTestStrSearch.pas',
+   uCTYDAT              in '..\..\src\uCTYDAT.PAS',
+   uTestCTYDAT          in 'uTestCTYDAT.pas';
 
 begin
    IsMultiThread := True;  // Match main application setting
@@ -78,6 +80,7 @@ begin
    RegisterSuite(TADIFRegressionTests.Create('ADIFRegression'));
    RegisterSuite(TFreqTimeFormatTests.Create('FreqTimeFormat'));
    RegisterSuite(TStrSearchTests.Create('StrSearch'));
+   RegisterSuite(TCTYDATTests.Create('CTYDAT'));
 
    if RunAllSuites then
       begin
