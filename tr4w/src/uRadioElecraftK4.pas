@@ -534,6 +534,11 @@ if applicable (0=DATA A, 1=AFSK A, 2= FSK D, 3=PSK D)
       end;
 
    vfo.frequency := hz;
+   vfo.band := FreqToRadioBand(hz);
+      // Serial polling only sends IF;FB; (AI off), so BN never arrives on a
+      // band change -- derive band from frequency here, as every other modern
+      // radio class does (Icom/Flex/TS-890).  Keeps the band label in sync when
+      // the operator changes bands on the radio over a serial connection.
    vfo.mode := ModeStrToMode(sMode,sDataMode);
 
 
@@ -675,6 +680,7 @@ begin
          if hz >= 0 then
             begin
             Self.vfo[nrVFOA].frequency := hz;
+            Self.vfo[nrVFOA].band := FreqToRadioBand(hz);   // keep band in sync with frequency (see ParseIFCommand note)
             end
          else
             begin
@@ -686,6 +692,7 @@ begin
          if hz >= 0 then
             begin
             Self.vfo[nrVFOB].frequency := hz;
+            Self.vfo[nrVFOB].band := FreqToRadioBand(hz);   // keep band in sync with frequency (see ParseIFCommand note)
             end
          else
             begin
