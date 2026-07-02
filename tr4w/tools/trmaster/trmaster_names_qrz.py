@@ -122,10 +122,36 @@ class QRZNameClient:
         os.replace(tmp, self._cache_path)   # atomic on same filesystem
         self._dirty = False
 
+    @staticmethod
+    def _entry_is_org(entry):
+        """A 'no name' entry that QRZ shows is a club/org: its `name` field
+        (stored as `qname`) contains a club word and there is no personal
+        nickname/fname. A club call never becomes a person, so its miss is
+        permanent and must NOT be re-queried on the short miss TTL.
+
+        Derived from the already-stored `qname`, so it applies retroactively to
+        entries cached before this logic existed — no re-lookup, no migration.
+        Conservative on purpose: only a definite club-word match qualifies, so a
+        real person is never mistaken for a club (a club we miss just keeps the
+        30-day recheck — a wasted lookup, not a wrong name).
+        """
+        q = (entry.get("qname") or "").strip().upper()
+        if not q:
+            return False
+        if entry.get("nickname") or entry.get("fname"):
+            return False
+        return bool(set(q.split()) & CLUB_WORDS)
+
     def _fresh(self, entry):
-        # entries WITH a name use the long (hit) TTL; "no name" entries use the
-        # shorter (miss) TTL.
-        ttl = self._hit_max_secs if entry.get("name") else self._miss_max_secs
+        # Named entries use the long (hit) TTL. "No name" entries use the short
+        # (miss) TTL so a call that later gains a name gets rechecked — EXCEPT
+        # confirmed clubs/orgs, which never become a person and so never expire.
+        if entry.get("name"):
+            ttl = self._hit_max_secs
+        elif self._entry_is_org(entry):
+            ttl = 0                       # confirmed club -> never re-query
+        else:
+            ttl = self._miss_max_secs
         if ttl <= 0:
             return True   # 0 = never expire
         return (self._now - int(entry.get("ts", 0))) <= ttl

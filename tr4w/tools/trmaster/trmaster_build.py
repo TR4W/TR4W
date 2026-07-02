@@ -7,14 +7,18 @@ richer SCP.DB sqlite) with the membership/name layer (CWops roster CSV, FOC,
 HSC) and any previously-accumulated names from the existing TRMASTER.DTA, then
 writes a single K1EA .dta that TR4W's existing reader consumes unchanged.
 
-Pipeline (precedence shown):
+Pipeline (Name precedence shown, high -> low):  CWops > FOC > history > seed > QRZ
   call universe  = MASTER.DTA calls  (+ every roster/existing call)
   per call fields:
     1. existing TRMASTER.DTA            (preserve accumulated Name + memberships)
-    2. CWops CSV   -> User1 (CWops #) + Name (overrides; roster is current)
-    3. FOC         -> FOC #            + Name (fills if missing)
-    4. HSC         -> User2 (HSC #)
-    5. name resolver (optional --names-csv from your FCC/QRZ script) fills any
+    2. callsign-history files          -> Name (curated on-air names; override the
+       (ICWC-MST / K1USN SST / VE2FK)      accumulated seed/QRZ name, but the
+                                           authoritative CWops/FOC rosters below
+                                           still win)
+    3. CWops CSV   -> User1 (CWops #) + Name (overrides; roster is current)
+    4. FOC         -> FOC #            + Name (roster name wins)
+    5. HSC         -> User2 (HSC #)
+    6. name resolver (optional --names-csv from your FCC/QRZ script) fills any
        call still missing a Name
 
 Nothing here runs inside TR4W. Run it before the monthly build.
@@ -29,6 +33,7 @@ See README.md in this directory for source URLs and the FCC/QRZ hook.
 
 import argparse
 import csv
+import glob as globmod
 import os
 import re
 import sqlite3
@@ -176,32 +181,98 @@ def load_names_csv(path):
     return out
 
 
+def resolve_history_files(patterns):
+    """Resolve each --history-glob pattern to the single NEWEST matching file.
+
+    The monthly workflow is to drop an updated copy (new version suffix, e.g.
+    ICWC-MST-047.txt -> ICWC-MST-048.txt) into the seed dir. Picking only the
+    newest per pattern means the fresh drop fully supersedes the prior month:
+    a name corrected/removed there is not resurrected from a stale old copy left
+    behind. `sorted(..., reverse=True)` puts the highest (zero-padded) version
+    first; it also prefers 'ICWC-MST-047.txt' over the 'ICWC-MST-047 (1).txt'
+    accidental download dup. Returns files in the given pattern order = priority.
+    """
+    files = []
+    for pat in patterns or []:
+        matches = sorted(globmod.glob(pat), reverse=True)
+        if not matches:
+            log(f"  history: no file matches {pat}")
+            continue
+        if len(matches) > 1:
+            log(f"  history: {len(matches)} files match {pat}; using newest "
+                f"{os.path.basename(matches[0])} "
+                f"(ignoring {[os.path.basename(m) for m in matches[1:]]})")
+        files.append(matches[0])
+    return files
+
+
+def load_history_names(paths):
+    """N1MM-style callsign-history files (ICWC-MST, K1USN SST, VE2FK Names, ...).
+
+    Format: CSV, col0 = CALL, col1 = NAME; lines starting with '#' or '!!' are
+    comment/header lines and are skipped. `paths` is in PRIORITY order: the first
+    file to define a name for a call wins (later files only fill calls not yet
+    seen). Returns {CALL: NAME(upper)}.
+    """
+    out = {}
+    for path in paths:
+        if not path or not os.path.exists(path):
+            continue
+        n0 = len(out)
+        with open(path, newline="", encoding="utf-8", errors="replace") as f:
+            for row in csv.reader(f):
+                if not row:
+                    continue
+                c0 = row[0].strip()
+                if not c0 or c0.startswith("#") or c0.startswith("!!"):
+                    continue
+                call = c0.upper()
+                name = row[1].strip().upper() if len(row) > 1 else ""
+                if valid_call(call) and name and call not in out:
+                    out[call] = name
+        log(f"  history {os.path.basename(path)}: +{len(out) - n0} new names "
+            f"(total {len(out)})")
+    return out
+
+
 # --- merge ------------------------------------------------------------------
 
-def merge(universe, existing, cwops, foc, hsc, names):
-    """Build {CALL: fields} by the documented precedence."""
-    calls = set(universe) | set(existing) | set(cwops) | set(foc) | set(hsc)
+def merge(universe, existing, history, cwops, foc, hsc, names):
+    """Build {CALL: fields} by the documented precedence.
+
+    Name precedence (high -> low): CWops > FOC > history > seed(existing) > QRZ.
+
+    History calls, like the CWops/FOC/HSC rosters, expand the call universe
+    (curated active participants) and are therefore never pruned.
+    """
+    calls = (set(universe) | set(existing) | set(history)
+             | set(cwops) | set(foc) | set(hsc))
     out = {}
     for call in calls:
         f = {}
-        # 1. preserve accumulated data
+        # 1. preserve accumulated data (seed Name + memberships)
         if call in existing:
             f.update(existing[call])
-        # 2. CWops (current roster wins for number + name)
+        # 2. callsign-history files override the accumulated seed/QRZ name
+        #    (curated on-air names). Applied BEFORE CWops/FOC so those
+        #    authoritative rosters still win over the history name.
+        if call in history:
+            f["Name"] = history[call]
+        # 3. CWops (current roster wins for number + name)
         if call in cwops:
             f["User1"] = cwops[call]["User1"]
             if cwops[call].get("Name"):
                 f["Name"] = cwops[call]["Name"]
-        # 3. FOC
+        # 4. FOC (roster name wins over history)
         if call in foc:
             if foc[call].get("FOC"):
                 f["FOC"] = foc[call]["FOC"]
-            if foc[call].get("Name") and not f.get("Name"):
+            if foc[call].get("Name"):
                 f["Name"] = foc[call]["Name"]
-        # 4. HSC
+        # 5. HSC
         if call in hsc and hsc[call].get("User2"):
             f["User2"] = hsc[call]["User2"]
-        # 5. name resolver fills the gap
+        # 6. name resolver (QRZ) fills any call still nameless
         if not f.get("Name") and call in names:
             f["Name"] = names[call]
         out[call] = f
@@ -231,6 +302,13 @@ def main(argv=None):
     ap.add_argument("--cwops-url", help="CWops roster CSV export URL")
     ap.add_argument("--foc-csv", help="FOC export CSV (CALL,NUM[,NAME])")
     ap.add_argument("--hsc-csv", help="HSC export CSV (CALL,NUM[,NAME])")
+    ap.add_argument("--history-glob", action="append", default=[], metavar="PATTERN",
+                    help="callsign-history file glob (repeatable; pattern order = "
+                         "priority). Each pattern resolves to its single newest "
+                         "match, e.g. \"seed/ICWC-MST-*.txt\".")
+    ap.add_argument("--history-file", action="append", default=[], metavar="FILE",
+                    help="explicit callsign-history file (repeatable; order = "
+                         "priority; applied before --history-glob results).")
     ap.add_argument("--names-csv", help="name source CSV (CALL,NAME) from FCC/QRZ")
     ap.add_argument("--prune-qrz-unverified", metavar="SCP.DB",
                     help="drop universe calls that SCP.DB marks NOT QRZ-verified "
@@ -287,11 +365,18 @@ def main(argv=None):
     hsc.update(parse_simple_csv(args.hsc_csv, "User2"))
     log(f"  FOC entries: {len(foc)}   HSC entries: {len(hsc)}")
 
+    # callsign-history name layer (curated on-air names; override seed/QRZ,
+    # below CWops/FOC). Priority = explicit --history-file first, then each
+    # --history-glob's newest match, in the order given.
+    history_paths = list(args.history_file) + resolve_history_files(args.history_glob)
+    history = load_history_names(history_paths)
+    log(f"  history names: {len(history)}")
+
     names = load_names_csv(args.names_csv)
     log(f"  name-resolver names: {len(names)}")
 
     # 3. merge + write
-    merged = merge(universe, existing, cwops, foc, hsc, names)
+    merged = merge(universe, existing, history, cwops, foc, hsc, names)
     census(merged, "merged")
     size = tc.write_dta(args.out, merged)
     log(f"\nwrote {args.out}: {size} bytes")

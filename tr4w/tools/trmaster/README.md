@@ -4,9 +4,11 @@ Offline tooling to (re)generate `TRMASTER.DTA` without depending on an external
 maintainer's pipeline. **Nothing here runs inside TR4W** — run it before a build.
 
 It unions a fresh callsign list (supercheckpartial) with the membership/name
-layer (CWops, FOC, HSC) and a curated name seed, optionally prunes lapsed
-US/UK/CA calls, backfills names from QRZ, and writes the same **K1EA
-"CT / TRlog" `.dta`** TR4W already reads (no program changes).
+layer (CWops, FOC, HSC), a curated name seed, and curated callsign-history name
+files (ICWC-MST, K1USN SST, VE2FK Names) whose on-air names are more precise than
+QRZ, optionally prunes lapsed US/UK/CA calls, backfills the rest from QRZ, and
+writes the same **K1EA "CT / TRlog" `.dta`** TR4W already reads (no program
+changes).
 
 ## Files
 
@@ -62,6 +64,14 @@ makes later runs fast.
   (no header): `[2]=call, [3]=CWops#, [4]=first name`. Refreshed every run.
 - **FOC / HSC** — seeded from the curated seed file (no live feed: the FOC page is
   a Cloudflare/AJAX wall). Override with `--foc-csv` / `--hsc-csv CALL,NUM[,NAME]`.
+- **Callsign-history name files** — N1MM-style `CALL,NAME,...` text files kept in
+  `seed\` (`ICWC-MST-*.txt`, `K1USNSST-*.txt`, `Names_VE2FK-*.txt`). Curated
+  on-air CW names (nicknames), **more precise than QRZ**. Passed via `--history-glob
+  PATTERN` (repeatable; pattern order = priority, ICWC > K1USN > VE2FK). Each
+  pattern resolves to its **single newest** match, so **dropping an updated copy
+  into `seed\` each month supersedes the prior one** — a name corrected/removed in
+  the new file is not resurrected from a stale old copy. Like the CWops/FOC/HSC
+  rosters, these calls **expand** the TRMASTER universe (curated → never pruned).
 
 ## Pruning lapsed calls (`--prune-qrz-unverified SCP.DB`)
 
@@ -82,11 +92,17 @@ name, not the nickname — exportable to a `--names-csv`.)*
 
 ## Merge precedence (per call)
 
+Name precedence, highest → lowest: **CWops > FOC > history > seed > QRZ**.
+
 1. curated **seed** (preserve accumulated Name + memberships + orphan names)
-2. CWops CSV → `User1` (CWops #) + Name (current roster wins)
-3. FOC → `FOC` # + Name (fills if missing)
-4. HSC → `User2` (HSC #)
-5. `--names-csv` (QRZ) fills any remaining nameless call
+2. **callsign-history files** → Name (curated on-air names; **override** the
+   accumulated seed/QRZ name, but the authoritative CWops/FOC rosters below still
+   win). Within the history layer the first file to name a call wins (ICWC >
+   K1USN > VE2FK). These calls also expand the universe.
+3. CWops CSV → `User1` (CWops #) + Name (current roster wins)
+4. FOC → `FOC` # + Name (roster name wins over history)
+5. HSC → `User2` (HSC #)
+6. `--names-csv` (QRZ) fills any remaining nameless call
 
 Calls present only in the SCP source stay **bare** — still work for Super Check
 Partial, just no prefill.
@@ -100,6 +116,8 @@ to keep old copies (one `.bak` is kept for rollback). The files that carry
 non-regenerable history — **back these up**:
 
 - `seed\TRMASTER_seed.DTA` — frozen curated names / FOC / HSC / orphan names.
+- `seed\ICWC-MST-*.txt`, `seed\K1USNSST-*.txt`, `seed\Names_VE2FK-*.txt` — the
+  curated callsign-history name files (drop updated copies here monthly).
 - `~\.publicLogProcessor\qrz_name_cache.json` — accumulated QRZ lookups (the
   expensive part; otherwise re-querying ~44k calls).
 
