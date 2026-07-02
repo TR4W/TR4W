@@ -756,9 +756,9 @@ end;
 
 procedure GetDXQTH(var RXData: ContestExchange);
 
-var
+//var
   //ID                                    : string[6];
-  NumberChar                            : Char; {KK1L: 6.70}
+  //NumberChar                            : Char; {KK1L: 6.70}
 
 begin
   if not CountDomesticCountries then
@@ -866,10 +866,10 @@ procedure GetMultsFromLogEntry(LogEntry: Str80; var RXData: ContestExchange);
   in it's proper variable.  All other variables will be set to the null
   string.                                                                }
 
-var
-  MultString                            : Str20;
-  Mult, NumberMults                     : integer;
-  MultArray                             : array[1..2] of Str20;
+//var
+  //MultString                            : Str20;
+  //Mult, NumberMults                     : integer;
+  //MultArray                             : array[1..2] of Str20;
 
 begin
 
@@ -896,9 +896,9 @@ function DupeAndMultSheet.AddBigCallAddress(BigCall: EightBytes): integer;
   making it easier to determine if a big call is a dupe on any given
   band or mode.                                                      }
 
-var
-  NumberCalls, NumberDupeBlocks, NumberEntriesInLastBlock, Block, EndAddress, Address: integer;
-  MaxAvail                              : integer;
+//var
+ // NumberCalls, NumberDupeBlocks, NumberEntriesInLastBlock, Block, EndAddress{, Address}: integer;
+  //MaxAvail                              : integer;
 
 begin
 
@@ -906,11 +906,11 @@ end;
 
 procedure DupeAndMultSheet.AddCompressedCallToDupeSheet(Call: FourBytes; Band: BandType; Mode: ModeType);
 
-var
+{var
   NumberCalls, DupeBlock, BlockAddress  : integer;
   DupeBand                              : BandType;
   DupeMode                              : ModeType;
-
+}
 begin
   
 end;
@@ -969,7 +969,7 @@ function DupeAndMultSheet.TwoLetterCrunchProcess(PartialCall: {Call} string): bo
 
 var
   Address, FirstAddress, LastAddress, NumberCallsToCrunch: integer;
-  GotPartialCall, TempString            : Str20;
+  {GotPartialCall,} TempString            : Str20;
   FileWrite                             : Text;
 
 begin
@@ -1105,7 +1105,7 @@ procedure DupeAndMultSheet.AddCallToVisibleDupeSheet(Callsign: CallString);
 var
   SuffixString, NumberString            : CallString;
   NumberChar, Character                 : Char;
-  NextRecord, Remember, ActiveVDEntry   : VDEntryPointer;
+  NextRecord, {Remember,} ActiveVDEntry : VDEntryPointer;
   Count                                 : integer;
 
 begin
@@ -1301,11 +1301,11 @@ end;
 
 procedure DupeAndMultSheet.DisposeOfMemoryAndZeroTotals;
 
-var
-  Band                                  : BandType;
-  Mode                                  : ModeType;
-  NumberBlocks, Block                   : integer;
-  TempRemainingMultiplierType           : RemainingMultiplierType;
+//var
+  //Band                                  : BandType;
+  //Mode                                  : ModeType;
+ // NumberBlocks, Block                   : integer;
+  //TempRemainingMultiplierType           : RemainingMultiplierType;
 begin
 
   CallsignsList.ClearDupes;
@@ -1377,11 +1377,11 @@ end;
 
 procedure DupeAndMultSheet.ExamineLogForQSOTotals(var QTotals: QSOTotalArray);
 
-var
-  FileRead                              : Text;
-  TempString                            : string {Str80}; {WLI}
-  Band                                  : BandType;
-  Mode                                  : ModeType;
+//var
+  //FileRead                              : Text;
+ // TempString                            : string {Str80}; {WLI}
+//  Band                                  : BandType;
+ // Mode                                  : ModeType;
 
 begin
 
@@ -1426,13 +1426,13 @@ procedure DupeAndMultSheet.MakePossibleCallList(Call: CallString; var PossCallLi
 label
   CallAlreadyInList;
 
-var
-  Band, StartBand, EndBand              : BandType;
-  Mode, StartMode, EndMode              : ModeType;
-  CallBytes                             : FourBytes;
-  NumberCalls, CallAddress, NumberDupeBlocks, EndAddress, Entry: integer;
-  NumberEntriesInLastBlock, Block       : integer;
-  TempCall                              : Str80;
+//var
+ // Band, StartBand, EndBand              : BandType;
+ // Mode, StartMode, EndMode              : ModeType;
+ // CallBytes                             : FourBytes;
+ // NumberCalls, CallAddress, NumberDupeBlocks, EndAddress, Entry: integer;
+  //NumberEntriesInLastBlock, Block       : integer;
+  //TempCall                              : Str80;
 
 begin
   {
@@ -1561,10 +1561,10 @@ end;
 
 function DupeAndMultSheet.IsADomesticMult(Mult: Str10; Band: BandType; Mode: ModeType): boolean;
 
-var
-  NumberMults                           : integer;
-  CompressedMult                        : FourBytes;
-  DomQTH                                : Str20;
+//var
+  //NumberMults                           : integer;
+  //CompressedMult                        : FourBytes;
+ // DomQTH                                : Str20;
 
 begin
   {    IsADomesticMult := False;
@@ -1599,13 +1599,13 @@ label
   of totals is done.        }
 
 var
-  Mult, NumberMults                     : integer;
-  TempBand                              : BandType;
+  //Mult, NumberMults                     : integer;
+ // TempBand                              : BandType;
   MultBand                              : BandType;
   MultMode                              : ModeType;
-  CompressedMult                        : FourBytes;
-  DomQTH                                : Str20;
-  c                                     : integer;
+  //CompressedMult                        : FourBytes;
+  //DomQTH                                : Str20;
+ // c                                     : integer;
 
 begin
    logger.Trace('>>> Entering DupeAndMultSheet.SetMultFlags');
@@ -1666,10 +1666,10 @@ end;
 procedure DupeAndMultSheet.SaveRestartFile;
 
 var
-  Band                                  : BandType;
-  Mode                                  : ModeType;
+ // Band                                  : BandType;
+ // Mode                                  : ModeType;
   FileWrite                             : HWND;
-  Block, Result, NumberBlocks           : integer;
+ // Block, Result{, NumberBlocks}           : integer;
 
 begin
 
@@ -1739,9 +1739,9 @@ function DupeAndMultSheet.ReadInBinFiles {(JustDoIt: boolean)}: boolean;
 
 var
 //  FileRead                              : file;
-  Result1, Block, NumberBlocks          : integer;
-  Band                                  : BandType;
-  Mode                                  : ModeType;
+ // Result1, Block, NumberBlocks          : integer;
+ // Band                                  : BandType;
+ // Mode                                  : ModeType;
   RestartVersion                        : Str10;
   NameOfContest                         : Str80;
   h                                     : HWND;
@@ -2279,10 +2279,10 @@ end;
 procedure DupeInit;
 
 var
-  Block                                 : integer;
+  //Block                                 : integer;
   NextEntry, ActiveVDEntry              : VDEntryPointer;
-  Band                                  : BandType;
-  Mode                                  : ModeType;
+  //Band                                  : BandType;
+  //Mode                                  : ModeType;
 
 begin
   //  for Block := 1 to MaxPartialCallBlocks do PartialCallList[Block] := nil;
@@ -2509,10 +2509,10 @@ end;
 procedure DupeAndMultSheet.SetUpRemainingMultiplierArrays;
 
 var
-  StartBand, FinishBand, Band           : BandType;
-  StartMode, FinishMode, Mode           : ModeType;
-  TempString                            : Str20;
-  Address                               : integer;
+  StartBand, FinishBand{, Band}           : BandType;
+  StartMode, FinishMode{, Mode}           : ModeType;
+  //TempString                            : Str20;
+ // Address                               : integer;
 
 begin
   if MultByBand then

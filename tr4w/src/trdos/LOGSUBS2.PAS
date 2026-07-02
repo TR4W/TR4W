@@ -3168,7 +3168,6 @@ end;
 procedure LookupInfoToUDP(RXData: ContestExchange);
 var
    sBuf: AnsiString;
-   saveDecimalSeparator: char;
 begin
 
    udp.BroadcastEnabled := true;

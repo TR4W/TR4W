@@ -537,8 +537,8 @@ end;
 {------------------------------------------------------------------------------}
 procedure SendStringAndStop(Msg: Str160);
 
-var
-  CharPointer                           : integer;
+//var
+  //CharPointer                           : integer;
 
 begin
   if ActiveMode = CW then
@@ -665,7 +665,7 @@ procedure SendKeyboardInput;
   return is pressed.                                                    }
 
 var
-  Key, ExtendedKey                      : Char;
+  Key{, ExtendedKey}                      : Char;
   TimeMark                              : Cardinal {TimeRecord};
   Buffer                                : SendBufferType;
   BufferStart, BufferEnd                : integer;
@@ -1006,9 +1006,9 @@ end;
 
 procedure ShowOtherMemoryStatus;
 
-var
+{var
   TempString                            : Str160;
-
+}
 begin
 //  Windows.SetDlgItemText(MemProgHWND, 102, TC_NUMBERORLETTEROFMESSAGETOBEPROGRAM);
 
@@ -1138,8 +1138,8 @@ end;
 
 procedure AppendConfigFile(AddedLine: Str160);
 
-var
-  FileWrite                             : Text;
+//var
+  //FileWrite                             : Text;
 
 begin
 {
@@ -2014,8 +2014,8 @@ end;
 
 procedure SetUpToSendOnActiveRadio;
 
-var
-  TimeOut                               : Byte;
+//var
+  //TimeOut                               : Byte;
 
 begin
 
@@ -2102,9 +2102,9 @@ procedure SetUpToSendOnInactiveRadio;
 { This used to swap ActiveRadio as well, but I decided not to do that
   anymore.  }
 
-var
+{var
   TimeOut                               : Byte;
-
+}
 begin
 
   if KeyersSwapped then Exit; { Already swapped to inactive rig }

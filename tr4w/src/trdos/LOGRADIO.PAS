@@ -1485,8 +1485,8 @@ function RadioObject.WriteToCATPort(const Buffer;
 var
    lpNumberOfBytesWritten: DWORD;
 
-   i: integer;
-   s: string;
+  // i: integer;
+  // s: string;
    Buf: array[0..100 * 2] of Char;
    nLen: integer;
 
@@ -3303,7 +3303,7 @@ var
 //   lpNumberOfBytesWritten: cardinal;
 //   VFOByte: byte;
 //   p: PChar;
-   tempFilterWidth: integer;
+   //tempFilterWidth: integer;
    skipMode : boolean;
    bStateDataModeRequired : boolean;
    tNetMode: TRadioMode;

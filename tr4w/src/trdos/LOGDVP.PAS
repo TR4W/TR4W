@@ -160,8 +160,8 @@ type
 
   SharedMemoryPointer = ^DVPSharedMemory;
 
-var
-  SharedMemorySegment, SharedMemoryOffset: Word;
+//var
+ // SharedMemorySegment, SharedMemoryOffset: Word;
 //  SharedMemory                          : SharedMemoryPointer;
 
 function DVPActive: boolean;
@@ -298,9 +298,9 @@ end;
 
 procedure SaveBackCopy(QSONumber: integer; Seconds: integer);
 
-var
+{var
   TempString, FileName                  : Str20;
-
+}
 begin
   {    IF NOT DVPSetUp THEN Exit;
       SetLength (Seconds);
@@ -401,7 +401,7 @@ var
   Index                                 : integer;
   i                                     : integer;
   WAVFile                               : array[0..255] of Char;
-  Duration                              : Cardinal;
+  //Duration                              : Cardinal;
   TempChar                              : Char;
   Pauselenght                           : Cardinal;
   p                                     : PChar;
@@ -578,7 +578,7 @@ var
   Duration                              : Cardinal;
   WAVFile                               : PChar;
   countrtyId                            : DXMultiplierString;
-  tempBuffer                            : array[0..255 + 64] of Char;
+  //tempBuffer                            : array[0..255 + 64] of Char;
 begin
   Result := prCantPlay;
 

@@ -1003,7 +1003,7 @@ var
   CellSize                              : LONGINT;
   FileRead                              : file;
   FileWrite                             : Text;
-  BytesRead                             : Word;
+  //BytesRead                             : Word;
   X, Y, NextX, NextY, StartingOffset, EndingOffset: LONGINT;
   KeyString, TempString                 : Str40;
   EntryString                           : ShortString {string};
@@ -1665,9 +1665,9 @@ function CallDatabase.LoadInIndexArray: boolean;
 { This procedure will go read in the index array for the active file.
   It is saved in SCPIndexArray. Returns TRUE if it thinks it worked. }
 
-var
-  Directory                             : Str40;
-  Result1                               : integer {WORD} {WLI};
+//var
+  //Directory                             : Str40;
+  //Result1                               : integer {WORD} {WLI};
 
 begin
   WorkingDirectory := '';
@@ -2663,6 +2663,9 @@ begin
   if not LoadInIndexArray then Exit;
 
   FirstKeyPos := 0;
+  LowestKeyPos := 0;
+  SecondLowestKeyPos := 0;
+  ThirdLowestKeyPos := 0;
 
   LowestCell := AVeryBigNumber;
   SecondLowestCell := AVeryBigNumber;

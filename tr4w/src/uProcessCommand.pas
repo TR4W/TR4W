@@ -216,7 +216,7 @@ var
   CommandString                         : ShortString;
   TempInt, Result1                      : integer;
   i                                     : integer;
-  p                                     : Pointer;
+  //p                                     : Pointer;
   cmdProc                               : procedure;   // Issue #997: typed call of a Pointer command handler
 begin
   FoundCommand := False;
@@ -627,7 +627,7 @@ end;
 procedure scBOOLSWAP;
 var
   i                                     : integer;
-  p                                     : Pointer;
+  //p                                     : Pointer;
   cmdProc                               : procedure;   // Issue #997: typed call of a Pointer change-handler
 begin
   for i := 1 to CommandsArraySize do

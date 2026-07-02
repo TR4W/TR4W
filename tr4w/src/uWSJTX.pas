@@ -366,7 +366,7 @@ var
 
   isNew, TXEnabled, transmitting, Decoding: Boolean;
   tm: Longword;
-  ztime: TDateTime;
+  //ztime: TDateTime;
   DT: Double;
   DF: Cardinal;
   date: TDateTime;
@@ -378,11 +378,11 @@ var
   grid: string;
   nResult: integer;
   shortStr: shortString;
-  len: integer;
+  //len: integer;
   newMessage: string;
-  n: integer;
-  callIndex: integer;
-  gridIndex: integer;
+  //n: integer;
+  //callIndex: integer;
+  //gridIndex: integer;
 
 begin
   //FUDP.IdUDPServer1.Bindings := '127.0.0.1:2237,[::]:2237';
@@ -916,7 +916,7 @@ var
   AData: TIdBytes;
   messageType, magic, schema: LongInt;
   id: string;
-  colorType: byte;
+  //colorType: byte;
 
 begin
 

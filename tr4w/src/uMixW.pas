@@ -49,16 +49,16 @@ uses
   uFileView,
   MainUnit;
 
-var
+{var
   MixW                                  : OleVariant;
   MixWLoaded                            : boolean;
   MixWConnectionStatusWnd               : HWND;
-
+}
 function MixW2DlgProc(hwnddlg: HWND; Msg: UINT; wParam: wParam; lParam: lParam): BOOL; stdcall;
 label
   1, con;
-var
-  p                                     : PChar;
+//var
+ // p                                     : PChar;
 begin
 {$IF MIXWMODE}
   RESULT := False;
@@ -127,8 +127,8 @@ end;
 {$IFEND}
 
 procedure DisplayMixWConnection;
-var
-  p                                     : PChar;
+//var
+ // p                                     : PChar;
 begin
 {$IF MIXWMODE}
   if MixWLoaded = True then p := TC_MIXW_CONNECTED else p := TC_MIXW_DISCONNECTED;

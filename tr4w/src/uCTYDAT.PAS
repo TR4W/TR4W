@@ -356,9 +356,9 @@ var
   i                                     : Cardinal;
   s                                     : Cardinal;
   b                                     : array[0..31] of Char;
-  rmbuffer                              : array[0..4096 - 1] of Char;
+  //rmbuffer                              : array[0..4096 - 1] of Char;
   c                                     : ctyColumns;
-  x                                     : Cardinal;
+  //x                                     : Cardinal;
   l                                     : Cardinal;
   Lat, Lon                              : REAL;
   code                                  : integer;
@@ -369,8 +369,8 @@ var
   oITU                                  : Byte;
   oCQ                                   : Byte;
   Size                                  : Cardinal;
-  Minutes                               : integer;
-  pppp                                  : integer;
+ // Minutes                               : integer;
+ // pppp                                  : integer;
 //  NumberCountriesIndex             : integer;
 const
   rm                                    = 'REMAINING MULTS';
@@ -580,7 +580,7 @@ var
   iI, iJ, iK, iSize                     : integer;
   wTemp1                                : PrefixRec;
   wTemp2                                : PrefixRec;
-  h                                     : HWND;
+ // h                                     : HWND;
   TempChar                              : Char;
   TempPtr                               : PrefixRecPtr;
 begin
@@ -716,7 +716,7 @@ var
   TempLength                            : integer;
   TempPrefix                            : PrefixName;
   TempPointer                           : integer;
-  StandardCall                          : CallString;
+  //StandardCall                          : CallString;
   GuantanamoBayCallsign                 : boolean;
 begin
   TempIndex := 0;
@@ -849,7 +849,7 @@ function ctyGetGrid(Call: CallString; var ID: DXMultiplierString): GridString;
 var
   TempInteger                           : integer;
   TempChar                              : Char;
-  TempFourChar                          : FourChar;
+ // TempFourChar                          : FourChar;
   Oblast                                : Str2;
 begin
   if ctyLocateCall(Call, CTY.ctyTempQTHRecord) then
@@ -1273,9 +1273,9 @@ begin
 end;
 
 procedure ctyLoadInR150SList;
-var
-  TempIndex                             : integer;
-  TempRec                               : PrefixRecPtr;
+//var
+  //TempIndex                             : integer;
+ // TempRec                               : PrefixRecPtr;
 begin
 
   cty.ctyR150SMode := True;
@@ -1286,9 +1286,9 @@ begin
 end;
 
 procedure ctyLoadInRFOblList;
-var
-  TempIndex                             : integer;
-  TempRec                               : PrefixRecPtr;
+//var
+  //TempIndex                             : integer;
+  //TempRec                               : PrefixRecPtr;
 begin
 
   cty.ctyRFOblMode := True;

@@ -15,7 +15,7 @@ Type TK4Radio = class(TNetRadioBase)
       //procedure ProcessMessage(sMessage: string);
       procedure Initialize;
       function ModeTypeToInteger(mode: TRadioMode; var dataModeInt: integer): integer;
-      function IsDataMode(mode: TRadioMode): boolean;
+      //function IsDataMode(mode: TRadioMode): boolean;
 
    public
       Constructor Create;
@@ -123,7 +123,7 @@ begin
 end;
 
 procedure TK4Radio.SendCW;
-var s: string;
+//var s: string;
 begin
    if Self.CWBuffer = '' then
       begin
@@ -161,10 +161,10 @@ end;
 
 procedure TK4Radio.SetMode(mode:TRadioMode; vfo: TVFO = nrVFOA);
 var
-   sMode: string;
+  // sMode: string;
    modeInt: integer;
    dataModeInt: integer;
-   isData: boolean;
+  // isData: boolean;
 
 begin
    modeInt := Self.ModeTypeToInteger(mode,dataModeInt);
@@ -338,7 +338,7 @@ begin
 end;
 
 function  TK4Radio.ToggleBand(vfo: TVFO = nrVFOA): TRadioBand;
-var newBand: TRadioBand;
+//var newBand: TRadioBand;
 begin
    //newBand := Self.priorBand;
    //Self.priorBand := Self.band;
@@ -413,7 +413,7 @@ var
    ritMultiplier: integer;
    xitMultiplier: integer;
    ritOffset: integer;
-   xitOffset: integer;
+   //xitOffset: integer;
    sVFO: string;
    sMode: string;
    sDataMode: string;
@@ -439,6 +439,8 @@ d Basic RSP format: always 0; K3 Extended RSP format (K31): DATA sub-mode,
 if applicable (0=DATA A, 1=AFSK A, 2= FSK D, 3=PSK D)
 }
    Result := false;
+   ritMultiplier := 1;
+   xitMultiplier := 1;
    if not length(cmd) in [36,38] then
       begin
       logger.Error('[ParseIFCommand] length of IF command not 36 or 38 bytes - %s',[cmd]);
@@ -603,7 +605,7 @@ procedure TK4Radio.ProcessMessage(sMessage: string);
 var
    sCommand: string;
    sData: string;
-   sMode: string;
+  // sMode: string;
    hz: integer;
    i: integer;
    RITSign: integer;
@@ -890,6 +892,7 @@ end;
 
 function TK4Radio.ModeTypeToInteger(mode: TRadioMode; var dataModeInt: integer): integer; // This converts the class mode to the K4 mode MD command
 begin
+   Result := -1;
    dataModeInt := -1; // So we do not mislead the caller since DATA A is 0.
    case mode of
       rmNone: Result := 0;
@@ -943,10 +946,12 @@ begin
 
 end;
 
+{
+// Not called for some reason - But reserve for future use
 function TK4Radio.IsDataMode(mode: TRadioMode): boolean;
 begin
    Result := mode in [rmData,rmDataRev];
 end;
-
+}
 
 end.
