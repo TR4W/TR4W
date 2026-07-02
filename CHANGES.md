@@ -35,6 +35,30 @@ _Nothing yet._
 
 ---
 
+## 4.149.x — July 2026
+
+### 4.149.00 (2026-07-02) — NY4I
+
+#### Radio Control — Network Icom & K4 Serial
+
+- **Network Icom liveness now keyed on CI-V data freshness** (`src/uRadioIcomBase.pas`, `src/uIcomNetworkTransport.pas`, `src/uIcomNetworkTypes.pas`) — Issue #1062 (PR #1063). A powered-off network Icom (reproduced on the IC-7760, CI-V over UDP) left the session in `icsConnected` forever because UDP is connectionless — no socket-close signal like the TCP-based K4. `GetIsOperational` (network path) now requires **both** `state = icsConnected` **and** a new `CivDataFresh` property (inbound CI-V seen within `ICOM_CIV_OPERATIONAL_TIMEOUT_MS = 3000`, ~6 missed `PollRadioState` cycles), evaluated on the reliable polling thread. Power-off now turns the freq display red and sets UDP `<IsConnected>false</IsConnected>` within a few seconds; recovery uses the existing stuck-handshake recycle. Mirrors the serial-radio approach from PR #1055.
+- **K4 serial band now derived from frequency** (`src/uRadioElecraftK4.pas`) — PR #1067. On serial the K4 runs with AI off and `PollRadioState` polls only `IF;FB;`, so a `BN` (band-number) response arrives only once at connect — the band label froze at the startup band while frequency kept updating (e.g. 21.278 MHz still shown as `20SSB`). `TK4Radio` was the only modern radio class setting a VFO `.frequency` without also setting `.band`. `FreqToRadioBand(hz)` is now applied at each frequency-assignment site (`ParseIFCommand` active VFO, `FA`, `FB`), matching the Icom/Flex/TS-890 pattern; band is authoritative from frequency on both serial and network, independent of `BN`.
+
+#### External Logger — DXKeeper (`src/uExternalLoggerBase.pas`, `src/uExternalLogger.pas`, `src/uEditQSO.pas`) — Issue #957 (PR #1064)
+
+- **Off-thread outbound send queue, one connect-per-command.** DXKeeper's TCP service reads exactly one command per connection then closes the socket, discarding anything else buffered. TR4W's edit path sent `deleteqso` + re-log `externallog` back-to-back on one connection; they coalesced into a single TCP segment, so DXKeeper ran the delete and silently dropped the re-log — edits never arrived. Replaced the persistent-connection assumption with a `Log`/`Delete`/`Replace` queue drained by a dedicated `TSenderThread` (main thread only enqueues — no socket I/O on the UI thread); DXKeeper overrides `DeliverCommand` with connect-per-command.
+- **Atomic QSO-edit replace.** `Replace` sends the re-log only if the delete succeeded (delete forced first — QSO identity is `CALL`+`QSO_DATE`+`TIME_ON`, unchanged by a mode edit); a half-done replace is logged loudly, never silent. `DeliverWithRetry` adds bounded interruptible-backoff retry; `ShutdownDrain` flushes on destroy and logs undelivered ops. The 2 s main-thread `Sleep` workaround in `uEditQSO.pas` is removed.
+
+#### Contest Data — IARU HQ (`tr4w/target/dom/iaruhq.dom`) — PR #1066
+
+- **IARU HQ multiplier list cross-checked against field `INITIAL.EX`.** Added 12 HQ abbreviations present in on-air data but missing from the DOM (arat, arukr, crac, erasd, frs, marp, sars, saru, shrak, svgrs, varc, vrona); removed 2 official spellings that conflict with the on-air form (`verona`→Curaçao sends VRONA; `aras`→Azerbaijan sends FRS) so each country resolves to a single multiplier. Net +12 / −2.
+
+#### Tooling — TRMASTER builder (`tr4w/tools/trmaster/`) — PR #1068
+
+- **Curated callsign-history name layer + QRZ club/org cache fix.** Offline `TRMASTER.DTA` builder only (nothing runs inside TR4W). Adds a curated on-air-name layer from N1MM-style history files (`ICWC-MST-*`, `K1USNSST-*`, `Names_VE2FK-*`) via new `--history-glob`/`--history-file`; name precedence is now CWops > FOC > history > seed > QRZ. QRZ club/org entries get `ttl=0` (never re-queried), derived retroactively from the stored `qname`.
+
+---
+
 ## 4.148.x — June 2026
 
 ### 4.148.17 (2026-06-22) — NY4I
