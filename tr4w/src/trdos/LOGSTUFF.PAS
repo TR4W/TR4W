@@ -4140,7 +4140,7 @@ function ProcessRSTQSONumberOrDomesticQTHExchange(Exchange: Str80; var RXData:
   ContestExchange): boolean;
 var
   NumberString, FirstString, SecondString, ThirdString: Str10;
-  n: integer;
+  //n: integer;
 begin
   ProcessRSTQSONumberOrDomesticQTHExchange := False;
 
@@ -5760,7 +5760,7 @@ var
   PtsMult, Points, MyZoneValue, Result: integer;
   Distance: LONGINT;
   RTCDistKm: Double; // Issue #902 -- RTC contest Haversine distance
-  RRC, MRC, RXCty, TheirID, CountryID: CallString; // 4.72.5
+  {RRC, MRC,} RXCty, TheirID, CountryID: CallString; // 4.72.5
   TempOblast: string[2];
   la1, la2, lo1, lo2: integer;
   Grid1, Grid2: GridString;
@@ -5768,7 +5768,7 @@ var
   temphour: byte; // 4.58.2
   iotastate, k: string[10];
   i, j: integer;
-  s1, s2, s3, s4: string[10];
+  //s1, s2, s3, s4: string[10];
   Str1: string[4];
   Str2: string[2];
   Str3: string[4];
@@ -9486,9 +9486,9 @@ begin
      regex.Free;
   end;
   if Result then
-  begin
-    logger.debug('%s is a valid GUID', [guid]);
-  end;
+     begin
+     logger.debug('%s is a valid GUID', [guid]);
+     end;
 end;
 
 function IsValidUSPrefix(const callsign: string): boolean;

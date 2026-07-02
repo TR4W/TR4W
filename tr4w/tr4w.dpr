@@ -552,12 +552,12 @@ var
 {$IF not tDebugMode}
   s                                     : string;
 {$IFEND}
-  logBuffer                             : string;
+ // logBuffer                             : string;
   tempStickyKey                         : STICKYKEYS;
-  tc                                    : tcolor;
+ // tc                                    : tcolor;
   sDebugLevel                           : string;
   i                                     : tLogLevels;
-  rgb                                   : cardinal;
+  //rgb                                   : cardinal;
   iniFile                               : TINIFile;                    // Used to simply find the DEBUG setting so we can set it when the logger object is created.
                                                                        // This way we can log before we read the DEBUG LOG LEVEL the legacy method in uCFG. // ny4i
 begin

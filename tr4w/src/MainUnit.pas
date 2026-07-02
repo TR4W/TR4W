@@ -1393,7 +1393,7 @@ label
   loop;
 var
   n: integer;
-  TempString: Str10;
+ // TempString: Str10;
 begin
   n := 0;
   DebugMsg('>>>>Entering ReturnInSAPOpMode');

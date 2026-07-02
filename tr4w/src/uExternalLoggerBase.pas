@@ -363,7 +363,7 @@ begin
       if socket.Connected then
          begin
          logger.Trace('[%s SendToLogger] Sending to radio: (%s) Hex:[%s]',[Self.loggerID,s, String2Hex(s)]);
-         nLen := length(s);
+         //nLen := length(s);
          socket.IOHandler.WriteLn(s);
          //socket.IOHandler.Write(s,nLen,0);
          end

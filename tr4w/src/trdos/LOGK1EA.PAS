@@ -2235,7 +2235,7 @@ end;
 procedure K1EAKeyer.InitializeKeyer;
 
 var
-  SerialPort                            : PortType;
+  //SerialPort                            : PortType;
   hand                                  : Cardinal;
 begin
 

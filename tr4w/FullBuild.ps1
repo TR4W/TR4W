@@ -65,7 +65,21 @@ param(
     # Max concurrent language compiles when -ParallelLanguages is set. Defaults
     # to the logical CPU count (DCC32 is single-threaded; one build per core is
     # the sweet spot -- more than cores adds memory/disk contention with no gain).
-    [int]$Throttle = [int]$env:NUMBER_OF_PROCESSORS
+    [int]$Throttle = [int]$env:NUMBER_OF_PROCESSORS,
+
+    # When set, build the main (ENG) application with all compiler diagnostics
+    # visible so hints/warnings can be audited and cleaned up. Two things are
+    # needed and neither is on by default:
+    #   1. -H+ -W+  re-enable hints/warnings. tr4w.cfg disables both globally
+    #      (-H- / -W-), so a normal build emits almost nothing. Command-line
+    #      flags are processed after the .cfg, so these override it. (The three
+    #      selective -w-UNSAFE_* suppressions in tr4w.cfg stay off -- those are
+    #      Delphi-7-era .NET portability warnings, intentionally silenced.)
+    #   2. -B       force a full rebuild. An incremental compile only reports
+    #      diagnostics for the units it actually recompiles; -B recompiles
+    #      every unit so no prior warnings are skipped.
+    # Applies to the Step 2 ENG build only (the full tr4w.dpr + all src units).
+    [switch]$VerboseCompile
 )
 
 # Guard: a 0/blank NUMBER_OF_PROCESSORS (or a silly override) must not stall the
@@ -709,11 +723,23 @@ Write-Host "Generating VERSIONINFO resource (ENG, $TR4W_VERSION)..." -Foreground
 $viOk = Write-VersionInfoResource -Lang 'ENG' -VersionString $TR4W_VERSION
 $viFlag = if ($viOk) { '-DVERSIONINFO_RES' } else { '' }
 
+# -VerboseCompile: -B forces a full rebuild so EVERY unit recompiles and re-emits
+# its diagnostics (an incremental build stays silent for units it doesn't touch).
+# -H+ -W+ re-enable the hints/warnings that tr4w.cfg turns off (-H- / -W-);
+# command-line flags are processed after the .cfg, so these win. Empty array in
+# the default case so the splat contributes nothing. Splat mirrors the proven
+# @extraFlags pattern used by the language loop below.
+$verboseFlags = if ($VerboseCompile) { @('-B', '-H+', '-W+') } else { @() }
+if ($VerboseCompile) {
+    Write-Host "Verbose compile ON: full rebuild (-B) with hints (-H+) and warnings (-W+) enabled." -ForegroundColor Yellow
+    Write-Host ""
+}
+
 Push-Location $TR4W_DIR
 if ($viFlag) {
-    & $DCC32 $PROJECT -`$D+ -`$L+ -`$Y+ $viFlag "/U$LIB" "/I$LIB" "/E$EXE_DIR"
+    & $DCC32 $PROJECT -`$D+ -`$L+ -`$Y+ $viFlag @verboseFlags "/U$LIB" "/I$LIB" "/E$EXE_DIR"
 } else {
-    & $DCC32 $PROJECT -`$D+ -`$L+ -`$Y+ "/U$LIB" "/I$LIB" "/E$EXE_DIR"
+    & $DCC32 $PROJECT -`$D+ -`$L+ -`$Y+ @verboseFlags "/U$LIB" "/I$LIB" "/E$EXE_DIR"
 }
 $result = $LASTEXITCODE
 Pop-Location

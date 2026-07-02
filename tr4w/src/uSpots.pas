@@ -51,7 +51,7 @@ type
 
   private
     FList: PSpotsList;
-    FCount, j: integer;
+    FCount{, j}: integer;
     FCurrentCursorFreq: integer;
     FCapacity: integer;
     BList: PSpotsListBuffer; // Gav 4.45.6
@@ -129,7 +129,7 @@ label
   add;
 var
   i: integer;
-  ie: str80;
+  //ie: str80;
 
 begin
 

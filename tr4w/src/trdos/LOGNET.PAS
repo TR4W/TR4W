@@ -60,24 +60,7 @@ begin
   //  CPUKeyer.SetUpSerialPort(ActiveMultiPort, MultiPortBaudRate, 8, NoParity, 2, 1);
 end;
 
-procedure AddK1EACheckSumToString(var Message: string);
 
-var
-  Index, Total                          : Byte;
-
-begin
-  {
-    Total := 0;
-
-    if length(message) > 0 then
-      for Index := 1 to length(message) do
-        Total := Total + ord(message[Index]);
-
-    Total := Total or $80;
-
-    message := message + CHR(Total);
-  }
-end;
 
 procedure SendMultiMessage(Message: string);
 

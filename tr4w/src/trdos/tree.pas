@@ -3103,7 +3103,7 @@ function LooksLikeAGrid(var GridString: ShortString): boolean;
 var
   TestString                            : Str20;
   i                                     : integer;
-  p                                  : pchar;
+ // p                                  : pchar;
 begin
 
   LooksLikeAGrid := False;
@@ -3168,7 +3168,7 @@ function LooksLikeAGridIgnoreAE(var GridString: ShortString): boolean;
 var
   TestString                            : Str20;
   i                                     : integer;
-  p                                  : pchar;
+  //p                                  : pchar;
 begin
 
   LooksLikeAGridIgnoreAE := False;

@@ -2314,7 +2314,7 @@ var
   csQTHString                           : PChar;
   nrReceived                            : integer;
   nrSent                                : integer;
-  tempcategoryoperator                  : tcategoryoperator;
+  //tempcategoryoperator                  : tcategoryoperator;
 
   T4                                    : PChar;      // 4.73.6
   sFirstPart                            : string;     // Issue #998: replaces CABRILLO_FIRST_PART

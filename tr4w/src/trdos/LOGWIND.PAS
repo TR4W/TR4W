@@ -1263,11 +1263,11 @@ type
   end;
 
 var
-  Band                                  : BandType;
-  Continent                             : ContinentType;
+  //Band                                  : BandType;
+ // Continent                             : ContinentType;
 
-  DupeSheetWindowX                      : integer;
-  DupeSheetWindowY                      : integer;
+  //DupeSheetWindowX                      : integer;
+  //DupeSheetWindowY                      : integer;
 
   NumberMinutesProgramRunning           : integer;
 
@@ -1277,7 +1277,7 @@ var
 //  Radio1PollCount                  : integer;
 //  Radio2PollCount                  : integer;
 
-  SavedWindowList                       : array[0..12] of SavedWindow;
+  //SavedWindowList                       : array[0..12] of SavedWindow;
 
   StartBand, StopBand                   : BandType;
   StartMode, StopMode                   : ModeType;
@@ -1412,7 +1412,7 @@ end;
 procedure DisplayBeamHeading(Call: CallString; Grid: GridString);
 
 var
-  Heading, Distance, Country            : integer;
+  Heading, Distance{, Country}            : integer;
   HeadingString, DistanceString         : Str20;
   HisGrid                               : GridString;
   CountryID                             : DXMultiplierString; //string[CallstringLength] {20};
@@ -1750,9 +1750,9 @@ end;
 
 procedure DisplayNamePercentage({TotalNamesSent: integer; QSONumber: integer});
 
-var
-  Percentage                            : REAL;
-  TNS                                   : integer;
+//var
+  //Percentage                            : REAL;
+  //TNS                                   : integer;
 begin
 {
   if (TotalContacts > 0) and SayHiEnable then
@@ -1999,7 +1999,7 @@ end;
 function QuickEditResponse(Prompt: PChar; MaxInputLength: Byte): ShortString;
 var
   h                                     : HWND;
-  Window                                : Byte;
+ // Window                                : Byte;
 begin
   Format(IQPrompt, TC_ENTER, Prompt);
   IQMaxInputLength := MaxInputLength;
@@ -2055,7 +2055,7 @@ var
   InputValue                            : LONGINT;
   Result1                               : integer;
 //  Key                              : Char;
-  CTRLStr, TempStr                      : Str80; {KK1L: 6.73}
+  CTRLStr{, TempStr}                      : Str80; {KK1L: 6.73}
 
 begin
   QuickEditFreq := -1;
@@ -2279,7 +2279,7 @@ procedure DecrementBandMapTimes;
 { Decrements all times by one.  Any that were at zero get deleted. }
 
 var
-  BandMapEntryRecord, EntryToBeDisposed, PreviousBandMapEntryRecord: BandMapEntryPointer;
+  BandMapEntryRecord, {EntryToBeDisposed,} PreviousBandMapEntryRecord: BandMapEntryPointer;
   MinutesLeft                           : Byte;
   Band                                  : BandType;
   Mode                                  : ModeType;
@@ -2393,7 +2393,7 @@ label
 
 var
   DateString, DayString                 : Str20;
-  Hour, Minute, Second, Hundredths      : Word;
+  Hour, Minute{, Second, Hundredths}      : Word;
   AlarmInteger, RecordNumber, IntegerTime {, RateMinute}: integer;
 //  TempBand                              : BandType;
   TempPchar                             : PChar;
@@ -2687,10 +2687,10 @@ end;
 
 procedure IncrementTime(Count: integer);
 
-var
-  LoopCount                             : integer;
-  Hours, Minutes, Seconds, Hundredths   : Word;
-  Year, Month, Day, DayOfWeek           : Word;
+//var
+ // LoopCount                             : integer;
+ // Hours, Minutes, Seconds, Hundredths   : Word;
+ // Year, Month, Day, DayOfWeek           : Word;
 
 begin
   AutoTimeQSOCount := 0;
@@ -2751,7 +2751,7 @@ procedure DeleteBandMapEntry(var Entry: BandMapEntryPointer);
 
 var
   BandMapEntryRecord, PreviousBandEntryRecord: BandMapEntryPointer;
-  CompressedDeleteCall                  : EightBytes;
+  //CompressedDeleteCall                  : EightBytes;
   {  StartBand, StopBand, }Band         : BandType;
   {  StartMode, StopMode, }Mode         : ModeType;
 
@@ -3232,9 +3232,9 @@ procedure GetBandMapBandModeFromFrequency(Frequency: LONGINT;
 
 { Mode might be setup by someone else - in which case, don't mess with it }
 
-var
-  TempMode                              : ModeType;
-  TempStr                               : Str20;
+//var
+ // TempMode                              : ModeType;
+  //TempStr                               : Str20;
 begin
   CalculateBandMode(Frequency, Band, {Temp} Mode);
 //  if not (Mode in [CW, Phone]) then
@@ -4010,8 +4010,8 @@ end;
 
 procedure OutputQSOorMultStatusString(OutputString_Milt: ShortString {Str160});
 
-var
-  Cursor                                : integer;
+//var
+ // Cursor                                : integer;
 
 begin
   GetRidOfPostcedingSpaces(OutputString_Milt);
@@ -4032,8 +4032,8 @@ var
   Zone                                  : integer;
   FoundCall                             : boolean;
   Heading                               : integer;
-  qe                                   : pChar;
-  pstr                                 : str80;
+  //qe                                   : pChar;
+  //pstr                                 : str80;
 
 begin
   if UserInfoShown = NoUserInfo then Exit;
@@ -4343,8 +4343,8 @@ procedure UpdateK1EAStationInfo(Field: K1EAStationInfoFieldType;
 
 var
   Freq                                  : LONGINT;
-  Index, Result                         : integer;
-  TempString                            : Str20;
+  {Index,} Result                         : integer;
+  //TempString                            : Str20;
   Band                                  : BandType;
   Mode                                  : ModeType;
 
@@ -4374,9 +4374,9 @@ end;
 
 procedure WindInit;
 
-var
-  Band                                  : BandType;
-  Mode                                  : ModeType;
+//var
+ // Band                                  : BandType;
+ // Mode                                  : ModeType;
 begin
   {
   for Band := Band160 to AllBands do
@@ -4435,12 +4435,12 @@ procedure DisplayLocalTime(Country: Word);
 label
   1;
 var
-  i                                     : integer;
+//  i                                     : integer;
   UTC, LOCAL                            : SYSTEMTIME;
-  Offset                                : LONGINT;
+  //Offset                                : LONGINT;
 //  p                                     : PChar;
-  SummerTimeIncrementation              : integer;
-  r                                     : integer;
+ // SummerTimeIncrementation              : integer;
+ // r                                     : integer;
   TZ                                    : TIME_ZONE_INFORMATION;
 begin
 
@@ -4535,17 +4535,18 @@ begin
 
  procedure NextBandMapEntry;
 var
-BandMapEntryRecord                    : BandMapEntryPointer;
-  NumberEntriesDisplayed                : integer;
+  //BandMapEntryRecord                    : BandMapEntryPointer;
+ // NumberEntriesDisplayed                : integer;
   Band                                  : BandType;
-  Mode                                  : ModeType;
+ // Mode                                  : ModeType;
   CC                                    : integer;
-  CurCursorPosData                      : integer;
-  numberbandentries                     : integer;
-  i,j                                  : integer;
+ // CurCursorPosData                      : integer;
+ // numberbandentries                     : integer;
+  //i: integer;
+  j                                  : integer;
   Spot                                  : TSpotRecord;
-  d                                     : pChar;
-  str1                                   : str10;
+  //d                                     : pChar;
+  //str1                                   : str10;
 
 begin
    TempSpot.FBand := NoBand;
@@ -4739,7 +4740,7 @@ end;
 
 procedure UpadateRadioStatus(rig: RadioPtr);
 var
-  TempInt                               : integer;
+  //TempInt                               : integer;
   h                                     : HWND;
   dif                                   : integer;
 begin
@@ -5013,9 +5014,9 @@ end;
 procedure tDispalyOnAirTime;
 var
 d              : Cardinal;
-OperatingTime                        : integer;
-  PreviousQSOTime                       : TQSOTime;
-  Switch : boolean;
+//OperatingTime                        : integer;
+ // PreviousQSOTime                       : TQSOTime;
+ // Switch : boolean;
 
  begin
   if (CallWinKeyDown) and (not Begin_QSO) then              // 4.115.3   dont start timeer until first entry
@@ -5049,8 +5050,8 @@ Then when elapsed next drops below break length, add saved elapsed to current el
 var
   d                                    : Cardinal;
   k                                    : Cardinal;
-  l                                    : Cardinal;
-  TimeDifference                       : Integer;
+  //l                                    : Cardinal;
+  //TimeDifference                       : Integer;
  //n4af 4.35.5
  begin
  // 4.115.2 remove commented code below
@@ -5135,9 +5136,9 @@ begin
 end;
 
 procedure old_UpadateRadioStatus(RadioPointer: RadioPtr);
-var
-  TempInt                               : integer;
-  h                                     : HWND;
+//var
+ // TempInt                               : integer;
+  //h                                     : HWND;
 begin
 end;
 
@@ -5183,11 +5184,11 @@ procedure DisplayCountryInformation(FileName: Str80; Call: CallString);
   line if found (up to five lines).  The information will be displayed
   in the editable log window. }
 
-var
-  FileRead                              : Text;
-  CountryID                             : Str20;
-  FileString                            : Str80;
-  WhereY                                : integer;
+//var
+  //FileRead                              : Text;
+  //CountryID                             : Str20;
+  //FileString                            : Str80;
+  //WhereY                                : integer;
 begin
 {  REMOVECANDIDATE
   //  if tr4w_WindowsArray[tr4w_LAST5WINDOW_INDEX].tr4w_WndHandle = 0 then Exit;
@@ -5274,7 +5275,7 @@ begin
 end;
 
 procedure SetListViewColor(Window: TMainWindowElement);
-var rgb: cardinal;
+//var rgb: cardinal;
 begin
   if wh[Window] = 0 then Exit;
   ListView_SetTextBkColor(wh[Window], tr4wColorsArray[TWindows[Window].mweBackG]);
