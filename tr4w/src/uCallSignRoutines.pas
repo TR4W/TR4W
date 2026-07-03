@@ -18,7 +18,7 @@ unit uCallSignRoutines;
 {$IMPORTEDDATA OFF}
 interface
 uses
-  TF,
+  uStrSearch,   // Issue #1033: was TF (needed only for StrU, which #997 moved to the light uStrSearch) -- drops TF -> MainUnit -> LogStuff coupling
   uRussiaOblasts,
   // Tree,
   utils_text,
@@ -495,7 +495,7 @@ var
 begin
   GoodCallSyntax := False;
   if length(Call) < 3 then Exit;
-  strU(Call);
+  uStrSearch.StrU(Call);
   if not StringHasLetters(Call) then Exit;
   case length(Call) of
     8:

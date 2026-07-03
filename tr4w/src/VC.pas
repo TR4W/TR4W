@@ -4085,6 +4085,11 @@ QSOPartiesCount = 20;
 
   var
     tr4wBrushArray                      : array[tr4wColors] of HBRUSH;
+    // Issue #1034: relocated here from LogDupe so light units (uMults and the
+    // pre-migration test EXE) can read the active DX-multiplier mode without
+    // pulling LogDupe's monolith cone. DXMultType is defined above in this unit;
+    // zero-initialized to NoDXMults (its first value), matching the old default.
+    ActiveDXMult                        : DXMultType;
 
 implementation
 //rd4wa -
