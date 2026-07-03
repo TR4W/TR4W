@@ -54,7 +54,9 @@ uses
    uStrSearch           in '..\..\src\uStrSearch.pas',
    uTestStrSearch       in 'uTestStrSearch.pas',
    uCTYDAT              in '..\..\src\uCTYDAT.PAS',
-   uTestCTYDAT          in 'uTestCTYDAT.pas';
+   uTestCTYDAT          in 'uTestCTYDAT.pas',
+   uMults               in '..\..\src\uMults.pas',
+   uTestMults           in 'uTestMults.pas';
 
 begin
    IsMultiThread := True;  // Match main application setting
@@ -81,6 +83,7 @@ begin
    RegisterSuite(TFreqTimeFormatTests.Create('FreqTimeFormat'));
    RegisterSuite(TStrSearchTests.Create('StrSearch'));
    RegisterSuite(TCTYDATTests.Create('CTYDAT'));
+   RegisterSuite(TMultsTests.Create('Mults'));
 
    if RunAllSuites then
       begin

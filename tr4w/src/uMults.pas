@@ -32,8 +32,7 @@ uses
   uCTYDAT,
   //Country9,
   Windows,
-  uCallsigns,
-  Log4D;
+  Log4D;   // Issue #1034: dropped uCallsigns (unused here)
 
 
 const
@@ -73,8 +72,13 @@ var
   mo                                    : MultsObject;
   
 implementation
-uses
-  LogDupe, MainUnit;
+
+// Issue #1034: own Log4D logger (initialized below), replacing the former
+// MainUnit.logger borrow. MainUnit + LogDupe were otherwise unused here, so
+// dropping them removes uMults's direct MainUnit -> LogStuff coupling and lets
+// the multiplier logic be linked into the dependency-light unit-test EXE.
+var
+  logger: TLogLogger;
 
 procedure MultsObject.IncrementTotals(Band: BandType; Mode: ModeType; m: RemainingMultiplierType);
 begin
@@ -248,6 +252,7 @@ begin
 end;
 
 begin
+  logger := TLogLogger.GetLogger('uMults');   // Issue #1034: own logger (was MainUnit.logger)
   mo.PrfList.Init;
   mo.DomList.Init;
 //  mo.PrfList := TSSL.Create;
