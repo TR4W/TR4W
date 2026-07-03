@@ -24,7 +24,8 @@ interface
 
 uses
   VC,
-  TF,
+  // Issue #1034: dropped 'TF' (unused here) -- it pulled TF -> MainUnit -> LogStuff,
+  // which blocked uSSL (and its uMults consumer) from linking into the test EXE.
   //Country9,
   Windows,
   Messages;

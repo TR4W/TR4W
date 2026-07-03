@@ -235,7 +235,8 @@ var
   InitialExDupes                        : integer;
 
   tAllowDupeQSOs                        : boolean = False;
-  ActiveDXMult                          : DXMultType {= NoDXMults};
+  // Issue #1034: ActiveDXMult moved to VC.pas (light home) so uMults can read it
+  // without depending on LogDupe. All users resolve it via VC (universally used).
   ActivePrefixMult                      : PrefixMultType {= NoPrefixMults};
 
   AutoDupeEnableCQ                      : boolean = False;

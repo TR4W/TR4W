@@ -56,7 +56,9 @@ uses
    uCallCompress        in '..\..\src\uCallCompress.pas',
    uTestCallCompress    in 'uTestCallCompress.pas',
    uCTYDAT              in '..\..\src\uCTYDAT.PAS',
-   uTestCTYDAT          in 'uTestCTYDAT.pas';
+   uTestCTYDAT          in 'uTestCTYDAT.pas',
+   uMults               in '..\..\src\uMults.pas',
+   uTestMults           in 'uTestMults.pas';
 
 begin
    IsMultiThread := True;  // Match main application setting
@@ -84,6 +86,7 @@ begin
    RegisterSuite(TStrSearchTests.Create('StrSearch'));
    RegisterSuite(TCallCompressTests.Create('CallCompress'));
    RegisterSuite(TCTYDATTests.Create('CTYDAT'));
+   RegisterSuite(TMultsTests.Create('Mults'));
 
    if RunAllSuites then
       begin
