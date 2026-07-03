@@ -40,6 +40,9 @@ type
       procedure Test_GoodCallSyntax_Rejects;
       procedure Test_RoverAndMobile;
       procedure Test_RootCall_Simple;
+      procedure Test_CountryPredicates;
+      procedure Test_SimilarCall;
+      procedure Test_StandardCallFormat;
    end;
 
 implementation
@@ -166,6 +169,55 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
+// Country-membership predicates: ' ID ' present in the country's list string.
+// Values verified against the constant lists in uCallSignRoutines.
+// ---------------------------------------------------------------------------
+procedure TCallSignRoutinesTests.Test_CountryPredicates;
+begin
+   BeginTest('Test_CountryPredicates');
+   CheckTrue(ARRLSectionCountry('K'),      'K is an ARRL-section country');
+   CheckFalse(ARRLSectionCountry('DL'),    'DL is not');
+   CheckTrue(ScandinavianCountry('OH'),    'OH Scandinavian');
+   CheckTrue(ScandinavianCountry('LA'),    'LA Scandinavian');
+   CheckFalse(ScandinavianCountry('K'),    'K not Scandinavian');
+   CheckTrue(UBACountry('DL'),             'DL UBA-Euro');
+   CheckTrue(UBACountry('F'),              'F UBA-Euro');
+   CheckFalse(UBACountry('K'),             'K not UBA-Euro');
+   CheckTrue(CISCountry('UA'),             'UA CIS');
+   CheckFalse(CISCountry('K'),             'K not CIS');
+   CheckTrue(IndonesianCountry('YB'),      'YB Indonesian');
+   CheckFalse(IndonesianCountry('K'),      'K not Indonesian');
+   CheckTrue(BlackSeaRegionCountry('LZ'),  'LZ Black Sea');
+   CheckFalse(BlackSeaRegionCountry('K'),  'K not Black Sea');
+end;
+
+// ---------------------------------------------------------------------------
+// SimilarCall: true when two calls differ in <=1 position ('?' is a wildcard),
+// or one contains the other. Portable designators are stripped first.
+// ---------------------------------------------------------------------------
+procedure TCallSignRoutinesTests.Test_SimilarCall;
+begin
+   BeginTest('Test_SimilarCall');
+   CheckTrue(SimilarCall('W1AW', 'W1AW'),  'identical');
+   CheckTrue(SimilarCall('W1AW', 'W1AX'),  'one character differs');
+   CheckTrue(SimilarCall('W1AW', 'W?AW'),  'wildcard ? matches');
+   CheckFalse(SimilarCall('W1AW', 'K5ZZ'), 'completely different');
+end;
+
+// ---------------------------------------------------------------------------
+// StandardCallFormat: no-slash calls pass through; /P and /QRP are stripped;
+// a call with a longer base and a prefix tail moves the prefix to the front.
+// ---------------------------------------------------------------------------
+procedure TCallSignRoutinesTests.Test_StandardCallFormat;
+begin
+   BeginTest('Test_StandardCallFormat');
+   CheckEquals('W1AW',    StandardCallFormat('W1AW', True),     'no slash -> unchanged');
+   CheckEquals('W1AW',    StandardCallFormat('W1AW/P', True),   '/P stripped');
+   CheckEquals('W1AW',    StandardCallFormat('W1AW/QRP', True), '/QRP stripped');
+   CheckEquals('DL/W1AW', StandardCallFormat('W1AW/DL', True),  'prefix moved to front');
+end;
+
+// ---------------------------------------------------------------------------
 // Suite entry point
 // ---------------------------------------------------------------------------
 procedure TCallSignRoutinesTests.RunAllTests;
@@ -179,6 +231,9 @@ begin
    Test_GoodCallSyntax_Rejects;
    Test_RoverAndMobile;
    Test_RootCall_Simple;
+   Test_CountryPredicates;
+   Test_SimilarCall;
+   Test_StandardCallFormat;
 end;
 
 end.
