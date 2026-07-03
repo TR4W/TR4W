@@ -58,7 +58,9 @@ uses
    uCTYDAT              in '..\..\src\uCTYDAT.PAS',
    uTestCTYDAT          in 'uTestCTYDAT.pas',
    uMults               in '..\..\src\uMults.pas',
-   uTestMults           in 'uTestMults.pas';
+   uTestMults           in 'uTestMults.pas',
+   uCallSignRoutines    in '..\..\src\uCallSignRoutines.pas',
+   uTestCallSignRoutines in 'uTestCallSignRoutines.pas';
 
 begin
    IsMultiThread := True;  // Match main application setting
@@ -87,6 +89,7 @@ begin
    RegisterSuite(TCallCompressTests.Create('CallCompress'));
    RegisterSuite(TCTYDATTests.Create('CTYDAT'));
    RegisterSuite(TMultsTests.Create('Mults'));
+   RegisterSuite(TCallSignRoutinesTests.Create('CallSignRoutines'));
 
    if RunAllSuites then
       begin
