@@ -1427,6 +1427,13 @@ type
 
   CallPtr = ^CallString;
 
+  // Issue: relocated from tree.pas so light units (uCallCompress, the
+  // pre-migration test EXE) can use the compressed-call byte types without
+  // pulling tree.pas's monolith cone. All existing users already use VC.
+  TwoBytes = array[1..2] of Byte;
+  FourBytes = array[1..4] of Byte;
+  EightBytes = array[1..8] of Byte;
+
   DomesticMultiplierString = Str10;
 
   DXMultiplierString = string[5];

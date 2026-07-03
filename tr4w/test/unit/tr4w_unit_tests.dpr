@@ -53,6 +53,8 @@ uses
    uTestFreqTimeFormat  in 'uTestFreqTimeFormat.pas',
    uStrSearch           in '..\..\src\uStrSearch.pas',
    uTestStrSearch       in 'uTestStrSearch.pas',
+   uCallCompress        in '..\..\src\uCallCompress.pas',
+   uTestCallCompress    in 'uTestCallCompress.pas',
    uCTYDAT              in '..\..\src\uCTYDAT.PAS',
    uTestCTYDAT          in 'uTestCTYDAT.pas';
 
@@ -80,6 +82,7 @@ begin
    RegisterSuite(TADIFRegressionTests.Create('ADIFRegression'));
    RegisterSuite(TFreqTimeFormatTests.Create('FreqTimeFormat'));
    RegisterSuite(TStrSearchTests.Create('StrSearch'));
+   RegisterSuite(TCallCompressTests.Create('CallCompress'));
    RegisterSuite(TCTYDATTests.Create('CTYDAT'));
 
    if RunAllSuites then
