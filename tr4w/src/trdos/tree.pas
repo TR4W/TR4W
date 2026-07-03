@@ -81,9 +81,8 @@ type
 
   ParityType = (tNoParity, EvenParity, OddParity);
 
-  TwoBytes = array[1..2] of Byte;
-  FourBytes = array[1..4] of Byte;
-  EightBytes = array[1..8] of Byte;
+  // TwoBytes/FourBytes/EightBytes moved to VC.pas (pre-migration extraction of
+  // callsign compression); tree.pas now gets them from VC (used in interface).
   FourBytesPtr = ^FourBytes;
 
 {
@@ -1012,6 +1011,7 @@ var
 implementation
 
 uses
+  uCallCompress,   // pre-migration: extracted callsign-compression primitives (golden-tested)
   LogStuff,
   uNet,
   LogDupe,
@@ -1323,25 +1323,10 @@ end;
 
 procedure BigCompressFormat(Call: CallString; var CompressedBigCall: EightBytes);
 
-var
-  CompressedCall                        : FourBytes;
-  Byte                                  : integer;
-  ShortCall                             : Str20;
+{ Extracted to uCallCompress.pas (pre-migration test net). Behavior unchanged. }
 
 begin
-  while length(Call) < 12 do
-    Call := ' ' + Call;
-
-  ShortCall := Copy(Call, 1, 6);
-  CompressFormat(ShortCall, CompressedCall);
-
-  for Byte := 1 to 4 do
-    CompressedBigCall[Byte] := CompressedCall[Byte];
-  Delete(Call, 1, 6);
-
-  CompressFormat(Call, CompressedCall);
-  for Byte := 1 to 4 do
-    CompressedBigCall[Byte + 4] := CompressedCall[Byte];
+  uCallCompress.BigCompressFormat(Call, CompressedBigCall);
 end;
 
 function BigExpandedString(Input: EightBytes): Str80;
@@ -1653,33 +1638,11 @@ end;
 
 procedure CompressFormat(Call: CallString; var Output: FourBytes);
 
-{ This function will give the compressed representation for the string
-    passed to it.  The string must be no longer than 6 characters.  }
-
-var
-  TempBytes                             : TwoBytes;
+{ Extracted to uCallCompress.pas (pre-migration test net). Forwards so the ~13
+  callers run the now unit-tested implementation. Behavior unchanged. }
 
 begin
-  if Call = '' then
-  begin
-    Output[1] := 0;
-    Output[2] := 0;
-    Output[3] := 0;
-    Output[4] := 0;
-    Exit;
-  end;
-
-  strU(Call);
-  //Call := UpperCase(Call);
-
-  while length(Call) < 6 do Call := ' ' + Call;
-
-  CompressThreeCharacters(Copy(Call, 1, 3), TempBytes);
-  Output[1] := TempBytes[1];
-  Output[2] := TempBytes[2];
-  CompressThreeCharacters(Copy(Call, 4, 3), TempBytes);
-  Output[3] := TempBytes[1];
-  Output[4] := TempBytes[2];
+  uCallCompress.CompressFormat(Call, Output);
 end;
 
 function CopyWord(LongString: string; Index: integer): Str80;
