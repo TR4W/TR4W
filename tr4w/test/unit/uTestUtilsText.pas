@@ -4,10 +4,8 @@ unit uTestUtilsText;
   Tests for utils_text.pas string predicate functions.
 
   Functions NOT tested here (easily replaced by Delphi 12 stdlib):
-    UpperCase, StringHas, StringHasNumber, StringHasLetters,
-    StringHasLowerCase, tCharIsNumbers, tCharIsAlphaNumericOrDash,
-    PostcedingString, PrecedingString, tPos, pPos, StrComp,
-    StrUpper, safeFloat.
+    UpperCase, StringHas, PostcedingString, PrecedingString,
+    tPos, pPos, StrComp, StrUpper, safeFloat.
 
   Functions tested:
     StringIsAllNumbers               -- used in exchange field parsing
@@ -15,6 +13,18 @@ unit uTestUtilsText;
     StringIsAllNumbersOrDecimal      -- used in frequency/RST parsing
     StringIsAllAlphanumericOrDash    -- park/callsign validation; bNoCase added Issue #877
     StringWithFirstWordDeleted       -- no stdlib equivalent; edge cases non-obvious
+
+  Exchange-field classification predicates (Issue #1035, roadmap item 4).
+  These "has-digit / has-letter / mixed / char-class" primitives are the
+  foundation the extracted exchange parser (#1038) will lean on, and each
+  is a candidate for Delphi 12 stdlib replacement -- so they get a
+  regression net now, before the freeze, even though they currently have
+  no external call sites of their own:
+    StringHasNumber                  -- "has a digit" (mixed-field detection)
+    StringHasLetters                 -- "has a letter" (case-insensitive via UpCase)
+    StringHasLowerCase               -- case detection for exchange normalization
+    tCharIsNumbers                   -- char-level digit test (underlies the numeric predicates)
+    tCharIsAlphaNumericOrDash        -- char-level callsign-shape test (A-Z/0-9/dash, uppercase only)
 }
 
 interface
@@ -33,6 +43,13 @@ type
       procedure Test_StringIsAllNumbersOrDecimal;
       procedure Test_StringIsAllAlphanumericOrDash;
       procedure Test_StringWithFirstWordDeleted;
+
+      // Issue #1035 -- exchange-field classification predicates
+      procedure Test_StringHasNumber;
+      procedure Test_StringHasLetters;
+      procedure Test_StringHasLowerCase;
+      procedure Test_tCharIsNumbers;
+      procedure Test_tCharIsAlphaNumericOrDash;
    end;
 
 implementation
@@ -185,6 +202,123 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
+// StringHasNumber -- true if the string contains at least one 0-9 digit.
+// Explicit empty-string guard returns false.
+// ---------------------------------------------------------------------------
+
+procedure TUtilsTextTests.Test_StringHasNumber;
+begin
+   BeginTest('Test_StringHasNumber');
+
+   // Empty string returns false (explicit guard)
+   CheckFalse(StringHasNumber(''), 'empty string');
+
+   // Positive: a digit anywhere
+   CheckTrue(StringHasNumber('599'), 'all digits (RST shape)');
+   CheckTrue(StringHasNumber('A1C'), 'digit in the middle (mixed)');
+   CheckTrue(StringHasNumber('K4'), 'trailing digit');
+   CheckTrue(StringHasNumber('3ABC'), 'leading digit');
+
+   // Negative: no digit
+   CheckFalse(StringHasNumber('ABC'), 'letters only');
+   CheckFalse(StringHasNumber('   '), 'spaces only');
+   CheckFalse(StringHasNumber('-/.'), 'punctuation only');
+end;
+
+// ---------------------------------------------------------------------------
+// StringHasLetters -- true if the string contains at least one A-Z letter.
+// Case-insensitive: the function UpCase()s each char before the range test,
+// so lowercase letters also count.
+// ---------------------------------------------------------------------------
+
+procedure TUtilsTextTests.Test_StringHasLetters;
+begin
+   BeginTest('Test_StringHasLetters');
+
+   // Empty string returns false (zero-iteration loop)
+   CheckFalse(StringHasLetters(''), 'empty string');
+
+   // Positive: an uppercase or lowercase letter anywhere
+   CheckTrue(StringHasLetters('ABC'), 'uppercase letters');
+   CheckTrue(StringHasLetters('abc'), 'lowercase letters (UpCase-folded)');
+   CheckTrue(StringHasLetters('12A'), 'letter in the middle (mixed)');
+   CheckTrue(StringHasLetters('599x'), 'trailing lowercase letter');
+
+   // Negative: no letters
+   CheckFalse(StringHasLetters('123'), 'digits only');
+   CheckFalse(StringHasLetters('1-2'), 'digits and dash');
+   CheckFalse(StringHasLetters('   '), 'spaces only');
+end;
+
+// ---------------------------------------------------------------------------
+// StringHasLowerCase -- true if the string contains at least one a-z char.
+// Uppercase-only strings return false (used to detect un-normalized input).
+// ---------------------------------------------------------------------------
+
+procedure TUtilsTextTests.Test_StringHasLowerCase;
+begin
+   BeginTest('Test_StringHasLowerCase');
+
+   // Empty string returns false
+   CheckFalse(StringHasLowerCase(''), 'empty string');
+
+   // Positive: a lowercase letter anywhere
+   CheckTrue(StringHasLowerCase('abc'), 'all lowercase');
+   CheckTrue(StringHasLowerCase('Kx4'), 'one lowercase among upper/digit');
+
+   // Negative: no lowercase
+   CheckFalse(StringHasLowerCase('ABC'), 'uppercase only');
+   CheckFalse(StringHasLowerCase('123'), 'digits only');
+   CheckFalse(StringHasLowerCase('K4A-1'), 'uppercase callsign shape');
+end;
+
+// ---------------------------------------------------------------------------
+// tCharIsNumbers -- single-char digit test (c in ['0'..'9']).
+// Underlies StringIsAllNumbers / StringHasNumber, so it is pinned directly.
+// ---------------------------------------------------------------------------
+
+procedure TUtilsTextTests.Test_tCharIsNumbers;
+begin
+   BeginTest('Test_tCharIsNumbers');
+
+   // Positive: every digit
+   CheckTrue(tCharIsNumbers('0'), 'zero');
+   CheckTrue(tCharIsNumbers('9'), 'nine');
+   CheckTrue(tCharIsNumbers('5'), 'five');
+
+   // Negative, including chars adjacent to '0'..'9' in ASCII
+   CheckFalse(tCharIsNumbers('A'), 'letter');
+   CheckFalse(tCharIsNumbers(' '), 'space');
+   CheckFalse(tCharIsNumbers('-'), 'dash');
+   CheckFalse(tCharIsNumbers('/'), 'slash (ASCII 47, just below 0)');
+   CheckFalse(tCharIsNumbers(':'), 'colon (ASCII 58, just above 9)');
+end;
+
+// ---------------------------------------------------------------------------
+// tCharIsAlphaNumericOrDash -- single-char callsign-shape test:
+// c in ['0'..'9'] or ['A'..'Z'] or ['-'].  UPPERCASE ONLY (no a-z).
+// ---------------------------------------------------------------------------
+
+procedure TUtilsTextTests.Test_tCharIsAlphaNumericOrDash;
+begin
+   BeginTest('Test_tCharIsAlphaNumericOrDash');
+
+   // Positive: uppercase letters, digits, dash
+   CheckTrue(tCharIsAlphaNumericOrDash('A'), 'uppercase A');
+   CheckTrue(tCharIsAlphaNumericOrDash('Z'), 'uppercase Z');
+   CheckTrue(tCharIsAlphaNumericOrDash('0'), 'digit 0');
+   CheckTrue(tCharIsAlphaNumericOrDash('9'), 'digit 9');
+   CheckTrue(tCharIsAlphaNumericOrDash('-'), 'dash');
+
+   // Negative: lowercase is NOT accepted, plus other punctuation/space
+   CheckFalse(tCharIsAlphaNumericOrDash('a'), 'lowercase a rejected');
+   CheckFalse(tCharIsAlphaNumericOrDash('z'), 'lowercase z rejected');
+   CheckFalse(tCharIsAlphaNumericOrDash(' '), 'space');
+   CheckFalse(tCharIsAlphaNumericOrDash('/'), 'slash');
+   CheckFalse(tCharIsAlphaNumericOrDash('.'), 'dot');
+end;
+
+// ---------------------------------------------------------------------------
 // Suite entry point
 // ---------------------------------------------------------------------------
 
@@ -195,6 +329,13 @@ begin
    Test_StringIsAllNumbersOrDecimal;
    Test_StringIsAllAlphanumericOrDash;
    Test_StringWithFirstWordDeleted;
+
+   // Issue #1035 -- exchange-field classification predicates
+   Test_StringHasNumber;
+   Test_StringHasLetters;
+   Test_StringHasLowerCase;
+   Test_tCharIsNumbers;
+   Test_tCharIsAlphaNumericOrDash;
 end;
 
 end.
