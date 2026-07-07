@@ -3476,6 +3476,22 @@ begin
       logger.Error('[ProcessRSTAndDomesticQTHExchange] Improper DOmestic QTH');
       ExchangeErrorMessage := TC_IMPROPERDOMESITCQTH;
     end;
+    { The code below to handle IARU-HF was commented out but it is not quite right anyway.
+      The issue is that when the exchange is a member society like IARU, the RXData.Zone is
+      not being set from the callsign. This is only a factor for external processors like
+      UDP as the Society, not the zone goes in the exchange in Cabrillo for example.
+      So I am adding the following code to check if we the ActiveExchange is
+      RSTZoneOrSocietyExchange and RXData.Zone is 255 (initialized value apparently),
+      then I lookup the zone from the call and set that. - NY4I 2026JUL07
+     }
+     if ActiveExchange = RSTZoneOrSocietyExchange then
+        begin
+        if (CONTEST = IARU)     and
+            (RXData.Zone = 255) then
+            begin
+            RXData.Zone := ctyGetZone(RXData.Callsign);
+            end;
+        end;
     {WLI}
 //    if ActiveExchange = RSTZoneOrSocietyExchange then
 //      if CONTEST <> IARU then RXData.Zone := CountryTable.GetITUZone(RXData.Callsign);

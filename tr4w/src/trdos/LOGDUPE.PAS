@@ -1410,16 +1410,21 @@ begin
 end;
 
 procedure LoadInitialExchangeFile;
-var
-  TempInteger                           : integer;
 begin
 
-  if not EnumerateLinesInFile(TR4W_INITIALEX_FILENAME, EnumInitialEx, True) then Exit;
-  TempInteger := Format(wsprintfBuffer, '%s:'#13#10 + TC_THEREWERECALLS, TR4W_INITIALEX_FILENAME, InitialExCallsigns, InitialExDupes);
-{$IF LANG = 'ENG'}
-  if InitialExDupes = 0 then wsprintfBuffer[TempInteger - 11] := #0;
-{$IFEND}
-  ShowMessage(wsprintfBuffer);
+  if not EnumerateLinesInFile(TR4W_INITIALEX_FILENAME, EnumInitialEx, True) then
+     begin
+     Exit;
+     end;
+
+     { Changed this from the MessageBox to a QuickDisplay - Much less intrusive - NY4I 2026JUL07 }
+  //TempInteger := Format(wsprintfBuffer, '%s:'#13#10 + TC_THEREWERECALLS, TR4W_INITIALEX_FILENAME, InitialExCallsigns, InitialExDupes);
+  if InitialExCallsigns > 0 then
+     begin
+     Format(wsprintfBuffer, '%s:' + TC_THEREWERECALLS, TR4W_INITIALEX_FILENAME, InitialExCallsigns, InitialExDupes);
+     QuickDisplay(wsprintfBuffer);
+     end;
+ // ShowMessage(wsprintfBuffer);
 end;
 
 procedure DupeAndMultSheet.MakePossibleCallList(Call: CallString; var PossCallList: PossibleCallRecord);
