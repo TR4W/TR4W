@@ -1,6 +1,10 @@
 # TR4W
 TRLOG 4 Windows free amateur radio logging application https://tr4w.net
 
+***Note:: This repo is frozen!*** 
+There is a project underway this month to convert TR4W to Delphi 12 Community Edition. Ony break-fixes or critical bugs will be added to this repo and the Delphi 7 code. FYI - The D12 migrationis in active development and is converting all calls to Unicode, real Delphi strings, except where not possible due to WIn32 calls. While the WIn32 calls and custon window creationwill be moved to standard Delphi VCL, that is a longer project (phase 2 of the D12 migration). The D12 repo is private at the moment but it is compiling, talking to radios, logging contacts, etc. I plan to use it in the IARC-HF this weekend so it is pretty far along.
+
+
 New to contesting? The big loggers are powerful — and intimidating enough that most newcomers give up and just use their everyday logger, missing dupe checking, spotting, and live scoring. TR4W takes the other path: type the exchange in plain order into one field, let the software handle CW and FT8 for you, and plug a modern radio straight into the network. Real contest features, none of the learning cliff. 
 
 ## Free and open-source. 
