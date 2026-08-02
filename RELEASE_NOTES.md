@@ -36,6 +36,20 @@ _Nothing yet._
 
 ---
 
+## 4.150.x — August 2026
+
+### 4.150.0 (2026-08-02) — NY4I
+
+#### Radio Control — Kenwood
+
+- **RIT and XIT offsets now display correctly.** A positive RIT or XIT offset always showed as zero — only negative offsets appeared. Both directions now read correctly.
+- **The mode shown next to each VFO keeps up with the radio.** The mode label beside the VFO frequency could stay on its previous value while the frequency itself kept updating. It now follows the radio for both VFO A and VFO B. (Issue #566)
+- **Frequency offsets no longer lose a digit.** Values such as 2.06 and −1.08 displayed as "2. 6" and "-1. 8"; they now show the leading zero correctly.
+
+These fixes were verified on a TS-570.
+
+---
+
 ## 4.149.x — July 2026
 
 > 📋 **See [docs/WHATS_NEW_4.149.md](docs/WHATS_NEW_4.149.md) for a consolidated, by-feature view of everything new since the 4.148.0 major release (all of 4.148.x plus 4.149.x).**

@@ -35,6 +35,23 @@ _Nothing yet._
 
 ---
 
+## 4.150.x — August 2026
+
+### 4.150.0 (2026-08-02) — NY4I
+
+#### Radio Control — Kenwood polling (`src/uRadioPolling.pas`, `src/TF.pas`) — Issue #566 (PR #1080)
+
+- **RIT/XIT offset always read zero when positive.** The Kenwood `IF` response carries the offset in P3 at positions 19–23: a sign character followed by four digits, where the sign is a **space** when the offset is positive. The parse asked `BufferToInt(@rig^.tBuf[i - 37], 19, 5)` for a five-character window starting at the sign position, but `BufferToInt` exits with `Result := 0` on the first character that is not a digit, `'+'` or `'-'`. Every positive offset therefore hit the space and returned 0; negative offsets worked only because `'-'` is in the accepted set. Now reads the four-digit magnitude from position 20 and applies the sign from position 19 explicitly. Field offsets verified against the 38-character `IF` response and consistent with the surrounding reads (`i-7` VFO, `i-5` split, `i-14` RIT, `i-13` XIT, `i-9` TX).
+- **Per-VFO mode label never updated.** The `IF` parse set only the top-level `CurrentStatus.Mode`/`ExtendedMode`, but the label drawn beside each VFO frequency reads `CurrentStatus.VFO[n].Mode`. `Mode` and `ExtendedMode` are now mirrored into the VFO record at the same point the frequency is assigned, for both `VFOA` and `VFOB`.
+- **Frequency offsets lost their leading zero** (`TF.pas`, `FreqToPChar`). `'%2u'` space-pads rather than zero-pads, so −1.08 rendered as `-1. 8` and 2.06 as `2. 6`. Both the negative and positive branches now use `'%02u'`. Verified on TS-570 hardware.
+
+#### Tooling — TRMASTER builder (`tr4w/tools/trmaster/`) — PR #1081
+
+- **Force-include list survives the QRZ-verified prune.** Offline `TRMASTER.DTA` builder only; nothing here runs inside TR4W. `--prune-qrz-unverified` drops calls that `SCP.DB` marks not QRZ-verified, which also removes legitimate calls QRZ does not list — notably Ofcom special-event callsigns issued for a single weekend. New repeatable `--include-file` and `load_include_calls()` union the listed calls into the universe **after** the prune, so they can never be pruned, and a listed call absent from every other source is still emitted. Format matches the file the slideshow already reads (one call per line, blank and `#` lines ignored, first whitespace token used, case folded, duplicates collapsed); wired into both build passes in `build_trmaster.cmd`. Ships with `wrtc2026.txt` emptied post-event — `load_include_calls` returns an empty (falsy) set, so the universe union is skipped and this month's output is unchanged.
+- **`dump_calls.py`** — spot-check tool that dumps the unique callsigns from a built `.DTA`, sorted, one per line, via `read_dta` from `trmaster_codec` so it stays in lock-step with the real format rather than re-decoding the binary. Its output (`calls.txt`) is gitignored.
+
+---
+
 ## 4.149.x — July 2026
 
 ### 4.149.00 (2026-07-02) — NY4I
