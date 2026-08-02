@@ -1,0 +1,22 @@
+# WRTC 2026 special callsigns -- one per line.
+#
+# The event has passed and the list has been emptied, so this file currently
+# force-includes nothing. The --include-file plumbing stays wired up in
+# build_trmaster.cmd; refill this list for the next event (or point --include-file
+# at a new file) and those calls survive the QRZ-verified prune again.
+#
+# This file is re-read on every render cycle, so you do NOT need to restart
+# n1mm_view -- save the file and the next slide refresh picks up the new calls.
+#
+# Rules:
+#   * Blank lines and lines starting with '#' are ignored.
+#   * Only the first token on a line is used as the callsign. Any trailing text
+#     is discarded, so team names are never displayed (WRTC anti-cheerleading).
+#   * Case does not matter; duplicates are collapsed.
+#
+# Example:
+#   GB0A
+#   GB1B
+#   GB2C
+#
+# --- add callsigns below this line ---
