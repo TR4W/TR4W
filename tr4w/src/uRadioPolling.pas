@@ -395,20 +395,39 @@ begin
                                                    begin
                                                       //            debugmsg('polling IF ' + inttostr(rig^.CurrentStatus.Freq));
                                                       rig^.CurrentStatus.VFO[VFOA].Frequency := rig^.CurrentStatus.Freq;
+                                                      // Mirror the mode into the active VFO so the per-VFO mode
+                                                      // label next to the frequency (Issue #566) updates -- the
+                                                      // IF parse above sets only the top-level Mode/ExtendedMode.
+                                                      rig^.CurrentStatus.VFO[VFOA].Mode := rig^.CurrentStatus.Mode;
+                                                      rig^.CurrentStatus.VFO[VFOA].ExtendedMode := rig^.CurrentStatus.ExtendedMode;
                                                       //        ActiveVFO_is_A := True;
                                                       rig^.CurrentStatus.VFOStatus := VFOA;
                                                    end
                                                 else
                                                    begin
                                                       rig^.CurrentStatus.VFO[VFOB].Frequency := rig^.CurrentStatus.Freq;
+                                                      rig^.CurrentStatus.VFO[VFOB].Mode := rig^.CurrentStatus.Mode;
+                                                      rig^.CurrentStatus.VFO[VFOB].ExtendedMode := rig^.CurrentStatus.ExtendedMode;
                                                       //        ActiveVFO_is_A := False;
                                                       rig^.CurrentStatus.VFOStatus := VFOB;
                                                    end;
 
                                                 //      rig^.CurrentStatus.Freq := rig^.CurrentStatus.Freq + rig^.FrequencyAdder;
+                                                // RIT/XIT offset: sign at position 19 (a SPACE for '+',
+                                                // '-' for negative), 4-digit magnitude at 20-23. BufferToInt
+                                                // returns 0 the moment it hits a non-digit, so reading the
+                                                // 5-char window from the sign position zeroed every POSITIVE
+                                                // offset (the space); negatives worked only because '-' is a
+                                                // valid leading char. Read the magnitude from 20 and apply
+                                                // the sign from 19 explicitly.
                                                 rig^.CurrentStatus.RITFreq :=
                                                    BufferToInt(@rig^.tBuf[i - 37],
-                                                   19, 5);
+                                                   20, 4);
+                                                if rig^.tBuf[i - 19] = '-' then
+                                                   begin
+                                                   rig^.CurrentStatus.RITFreq :=
+                                                      -rig^.CurrentStatus.RITFreq;
+                                                   end;
                                                 rig^.CurrentStatus.Split :=
                                                    rig^.tBuf[i - 5] <> '0';
                                                 rig^.CurrentStatus.RIT :=

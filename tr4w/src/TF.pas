@@ -297,11 +297,11 @@ begin  // This does not handle negative numbers very well.
    if i < 0 then
       begin
       absI := i * -1;
-      Format(FreqToPCharBuffer, '-%u.%2u', absI div 1000, (absI mod 1000) div 10); // Make 190 appear as 0.19
+      Format(FreqToPCharBuffer, '-%u.%02u', absI div 1000, (absI mod 1000) div 10); // %02u zero-pads hundredths: -1080 -> "-1.08", not "-1. 8"
       end
    else
       begin
-      Format(FreqToPCharBuffer, '%d.%2u', i div 1000, (abs(i) mod 1000) div 10); // Make 190 appear as 0.19
+      Format(FreqToPCharBuffer, '%d.%02u', i div 1000, (abs(i) mod 1000) div 10); // %02u zero-pads hundredths: 2060 -> "2.06", not "2. 6"
       end;
    Result := FreqToPCharBuffer;
 end;
