@@ -151,6 +151,7 @@ arc6.ddns.net:7373
 dxc.g3lrs.org.uk:7300
 g4bfg.net:7300
 spider.ham-radio.ch:8000
+uksmg.org:7300
 dxspider.co.uk:7300
 g7vjr.org:7300
 gb7baa.com:7300
@@ -463,6 +464,7 @@ n8ux.ddns.net:7373
 n8yib.dyndns.org
 n9ai.ddns.net:7373
 dx.n9jr.com:7300
+pycluster.n9jr.com:7300
 uronode.n9lya.ampr.org:7300
 N9PMO.NO-IP.ORG:7373
 na7kr.na7kr.us:9000
@@ -540,6 +542,7 @@ dxc.r1bet.ru:7300
 cats-home.net:37300
 77.91.196.82:7300
 dxc.r5acq.ru:7373
+msk.r5acq.ru:7300
 dx.rk3awl.ru:7300
 dxc.rc3c.ru:17300
 websdr.imorozov.info:7300
