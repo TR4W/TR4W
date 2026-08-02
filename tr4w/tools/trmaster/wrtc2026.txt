@@ -1,6 +1,10 @@
 # WRTC 2026 special callsigns -- one per line.
 #
-# Paste the ~50 issued callsigns below (one per line) once they are announced.
+# The event has passed and the list has been emptied, so this file currently
+# force-includes nothing. The --include-file plumbing stays wired up in
+# build_trmaster.cmd; refill this list for the next event (or point --include-file
+# at a new file) and those calls survive the QRZ-verified prune again.
+#
 # This file is re-read on every render cycle, so you do NOT need to restart
 # n1mm_view -- save the file and the next slide refresh picks up the new calls.
 #
@@ -16,53 +20,3 @@
 #   GB2C
 #
 # --- add callsigns below this line ---
-MB1A
-MB1I
-MB1N
-MB1S
-MB1T
-MB2A
-MB2D
-MB2H
-MB2M
-MB2N
-MB2R
-MB2S
-MB2U
-MB3B
-MB3D
-MB3F
-MB3G
-MB3H
-MB3K
-MB3L
-MB3M
-MB3R
-MB3V
-MB3W
-MB4C
-MB4F
-MB4G
-MB4L
-MB4O
-MB4P
-MB4V
-MB4W
-MB4X
-MB4Z
-MB5C
-MB5J
-MB5O
-MB5P
-MB5Q
-MB5X
-MB5Y
-MB5Z
-MB7D
-MB7F
-MB7G
-MB7K
-MB7L
-MB7M
-MB7V
-MB7W
