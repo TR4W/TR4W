@@ -37,6 +37,11 @@ REM  Pattern order = priority (ICWC > K1USN > VE2FK); each pattern resolves to
 REM  its single newest match, so a fresh drop supersedes the prior month.
 set "HISTORY=--history-glob seed\ICWC-MST-*.txt --history-glob seed\K1USNSST-*.txt --history-glob seed\Names_VE2FK-*.txt"
 
+REM --- force-include list: legitimate calls QRZ does not list (Ofcom WRTC -------
+REM  special-event calls). Added to the universe AFTER the prune so they survive.
+REM  Same file the slideshow reads. Empty it after the event to stop including.
+set "INCLUDE=--include-file wrtc2026.txt"
+
 if not exist "%WORK%" mkdir "%WORK%"
 
 REM --- the curated seed is a required, one-time input (never read from target) -
@@ -54,7 +59,7 @@ curl -sL --fail -o "%SCPDB%" https://supercheckpartial.com/downloads/SCP.DB || g
 REM --- 2. first build (downloads MASTER.DTA + CWops; --force = fresh) ---------
 echo [2/4] build pass 1 (universe + rosters + prune) ...
 "%PYTHON%" trmaster_build.py --out "%OUT%" --existing "%SEED%" ^
-    --download-master --force --cwops-url "%CWOPS_URL%" %HISTORY% ^
+    --download-master --force --cwops-url "%CWOPS_URL%" %HISTORY% %INCLUDE% ^
     --prune-qrz-unverified "%SCPDB%" || goto :error
 
 REM --- 3. QRZ name resolution for the bare calls (skips cleanly if no creds) --
@@ -65,7 +70,7 @@ echo [3/4] QRZ name lookups (limit %QRZ_LIMIT%) ...
 REM --- 4. final build with names --------------------------------------------
 echo [4/4] build pass 2 (with QRZ names) ...
 "%PYTHON%" trmaster_build.py --out "%OUT%" --existing "%SEED%" ^
-    --download-master --cwops-url "%CWOPS_URL%" %HISTORY% ^
+    --download-master --cwops-url "%CWOPS_URL%" %HISTORY% %INCLUDE% ^
     --prune-qrz-unverified "%SCPDB%" --names-csv "%NAMES%" || goto :error
 
 echo.

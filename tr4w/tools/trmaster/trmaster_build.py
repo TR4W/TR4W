@@ -181,6 +181,40 @@ def load_names_csv(path):
     return out
 
 
+def load_include_calls(paths):
+    """Force-include callsigns that must survive the QRZ-verified prune.
+
+    Some legitimate calls are simply not in QRZ -- e.g. Ofcom special-event
+    callsigns issued for a single weekend (WRTC). SCP.DB marks them
+    not-QRZ-verified, so --prune-qrz-unverified would drop them. Listing them
+    here adds them back into the universe AFTER the prune, so they are never
+    pruned. They also expand the universe (a listed call absent from every other
+    source is still emitted).
+
+    Format: one call per line; blank lines and '#' comments are ignored; only the
+    first whitespace token on a line is used (trailing text discarded); case is
+    folded and duplicates collapsed. Returns a set of uppercase calls. This is the
+    same format the slideshow's wrtc2026.txt already uses, so one file serves both.
+    """
+    out = set()
+    for path in paths or []:
+        if not path or not os.path.exists(path):
+            log(f"  include: no file matches {path}")
+            continue
+        n0 = len(out)
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                call = line.split()[0].upper()
+                if valid_call(call):
+                    out.add(call)
+        log(f"  include {os.path.basename(path)}: +{len(out) - n0} calls "
+            f"(total {len(out)})")
+    return out
+
+
 def resolve_history_files(patterns):
     """Resolve each --history-glob pattern to the single NEWEST matching file.
 
@@ -310,6 +344,11 @@ def main(argv=None):
                     help="explicit callsign-history file (repeatable; order = "
                          "priority; applied before --history-glob results).")
     ap.add_argument("--names-csv", help="name source CSV (CALL,NAME) from FCC/QRZ")
+    ap.add_argument("--include-file", action="append", default=[], metavar="FILE",
+                    help="force-include callsigns (repeatable); one call per line, "
+                         "blank/'#' lines ignored, first token used. Added to the "
+                         "universe AFTER the prune, so listed calls are never pruned "
+                         "(e.g. Ofcom WRTC special-event calls QRZ has not listed).")
     ap.add_argument("--prune-qrz-unverified", metavar="SCP.DB",
                     help="drop universe calls that SCP.DB marks NOT QRZ-verified "
                          "(removes lapsed/unverifiable calls; curated CWops/FOC/"
@@ -345,6 +384,17 @@ def main(argv=None):
                     if not (is_qrz_reliable_region(c) and c in allc and c not in ver)}
         log(f"  QRZ-verified prune (US/UK/CA only): {before} -> {len(universe)} "
             f"(dropped {before - len(universe)}; DX kept)")
+
+    # Force-include list: calls that must survive the prune (e.g. special-event
+    # calls QRZ does not list). Applied AFTER the prune so listed calls are never
+    # dropped, and unioned into the universe so a listed call missing from every
+    # other source is still emitted.
+    include = load_include_calls(args.include_file)
+    if include:
+        before = len(universe)
+        universe |= include
+        log(f"  force-include: {before} -> {len(universe)} "
+            f"(+{len(universe) - before} of {len(include)} listed)")
 
     # 2. layers
     existing = load_existing(args.existing)

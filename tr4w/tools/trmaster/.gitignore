@@ -7,3 +7,5 @@ seed/
 *.DTA
 *.xlsx
 *.csv
+# dump_calls.py output (regenerable spot-check dump of the built .DTA)
+calls.txt
