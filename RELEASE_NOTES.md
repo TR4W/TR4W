@@ -32,6 +32,14 @@ version number is assigned later, when a release is cut. To cut a release: renam
 user-facing — no file paths or source-level jargon.
 -->
 
+_Nothing yet._
+
+---
+
+## 4.150.x — August 2026
+
+### 4.150.1 (2026-08-31) — NY4I
+
 #### California QSO Party
 
 - **SSB contacts are now worth 3 points.** The CQP 2026 rules raise a phone QSO from 2 points to 3, matching CW. Every CQP contact now counts 3 points whatever the mode.
@@ -39,8 +47,6 @@ user-facing — no file paths or source-level jargon.
 - The same applies to the Pennsylvania and Virginia QSO Parties, which use the same serial-number-and-county exchange. County-line entry in the RST-style QSO parties (Florida, Texas, Michigan and the rest) is unchanged.
 
 ---
-
-## 4.150.x — August 2026
 
 ### 4.150.0 (2026-08-02) — NY4I
 

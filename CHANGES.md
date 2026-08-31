@@ -31,6 +31,14 @@ rename this "## Unreleased" to "### X.X.X (YYYY-MM-DD) — HANDLE", move it unde
 appropriate "## 4.147.x" month group below, and bump tr4w/src/Version.pas to match.
 -->
 
+_Nothing yet._
+
+---
+
+## 4.150.x — August 2026
+
+### 4.150.1 (2026-08-31) — NY4I
+
 #### Contest Rules — California QSO Party (`src/VC.pas`) — PR #1084
 
 - **CQP scores three points per QSO regardless of mode.** The CQP 2026 rules raise an SSB QSO from 2 points to 3; CW is unchanged at 3. The `CALQSOPARTY` row of `ContestsArray` moves from `QP:TwoPhoneThreeCW` to the existing `QP:ThreePointsPerQSO`. `TwoPhoneThreeCW` itself is untouched — it is shared with 7QP, TXQP, TNQP and CQIR.
@@ -46,8 +54,6 @@ appropriate "## 4.147.x" month group below, and bump tr4w/src/Version.pas to mat
 - **Incidental:** `QTHString` no longer carries a leading space (the old two-token splitter left `" SLO"` on the record, feeding the Cabrillo `%-6s`), and the RST parser's "Improper Domestic QTH" log line now shows the exchange — it previously logged empty parentheses because `RemoveLastString` had consumed the string before the message was formatted.
 
 ---
-
-## 4.150.x — August 2026
 
 ### 4.150.0 (2026-08-02) — NY4I
 
