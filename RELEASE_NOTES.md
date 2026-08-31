@@ -32,7 +32,11 @@ version number is assigned later, when a release is cut. To cut a release: renam
 user-facing — no file paths or source-level jargon.
 -->
 
-_Nothing yet._
+#### California QSO Party
+
+- **SSB contacts are now worth 3 points.** The CQP 2026 rules raise a phone QSO from 2 points to 3, matching CW. Every CQP contact now counts 3 points whatever the mode.
+- **You can now work a county-line station in CQP.** Give both counties in the one exchange, separated either by a slash or a space — `123 SLUI/MONT` or `123 SLUI MONT` — and TR4W logs a separate QSO for each county, both carrying the serial number the station sent. The counties may be given in any order, and more than two are allowed. Previously this appeared to work but quietly logged only the first county.
+- The same applies to the Pennsylvania and Virginia QSO Parties, which use the same serial-number-and-county exchange. County-line entry in the RST-style QSO parties (Florida, Texas, Michigan and the rest) is unchanged.
 
 ---
 

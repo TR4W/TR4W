@@ -31,7 +31,19 @@ rename this "## Unreleased" to "### X.X.X (YYYY-MM-DD) — HANDLE", move it unde
 appropriate "## 4.147.x" month group below, and bump tr4w/src/Version.pas to match.
 -->
 
-_Nothing yet._
+#### Contest Rules — California QSO Party (`src/VC.pas`) — PR #1084
+
+- **CQP scores three points per QSO regardless of mode.** The CQP 2026 rules raise an SSB QSO from 2 points to 3; CW is unchanged at 3. The `CALQSOPARTY` row of `ContestsArray` moves from `QP:TwoPhoneThreeCW` to the existing `QP:ThreePointsPerQSO`. `TwoPhoneThreeCW` itself is untouched — it is shared with 7QP, TXQP, TNQP and CQIR.
+
+#### Exchange Parsing — county-line entry for the serial-number QSO parties (`src/trdos/LOGSTUFF.PAS`, `src/MainUnit.pas`) — Issue #885 (PR #1084)
+
+- **Multi-county exchanges reached only the RST-style QSO parties.** The collection-and-queue logic added for #885 lives in `ProcessRSTAndDomesticQTHExchange`. CQP, the PA QSO Party and the VA QSO Party select the serial-number exchange, handled by `ProcessQSONumberAndDomesticQTHExchange`, which never called `QueuePendingCounty`. The failure was silent rather than diagnosed: `FoundDomesticQTH` truncates at the `/` (`PrecedingString(QTHString, '/')`), so `123 SLUI/MONT` validated, logged one QSO in SLUI, and discarded MONT with no warning.
+- **Shared helpers instead of a second copy.** `SplitExchangeIntoNumbersAndDomesticQTHs` maps `/` to space, walks tokens right-to-left via `RemoveLastString`, and returns numeric tokens and valid domestic QTHs in user-typed order — each non-numeric token probed through a scratch `ContestExchange` so the walk continues past the first match without disturbing the caller's record. `ApplyFirstQTHAndQueueRest` assigns `ValidQTHs[0]`, re-runs `FoundDomesticQTH` for the canonical name, and queues the remainder. Both parsers call both. Numeric tokens are returned rather than interpreted, since that is the one thing the two disagree on: RS(T) for one, the received serial for the other.
+- **RST-parser behaviour deliberately preserved.** It drives 13 other QSO parties, so the `RSTReceived = 0` guard still leaves an RS(T) already on the record alone, and the rightmost numeric token is still taken as the RS(T) (matching the old right-to-left walk taking the first number it met). The old "probe a numeric token as a QTH" fallback is dropped as unreachable — no shipped contest uses `DM: NumericID`.
+- **Digit/letter split in the serial-number parser.** Reproduces the split that function has always performed for `123SLUI`. Unambiguous for this exchange: no abbreviation in any dom file used by the contests that select it (`california_cty`, `pa_cty`, `va_cty`, `ukraine`, `grids`) contains a digit.
+- **Stale pending-county queue on the DX path.** `ProcessQSONumberAndDomesticOrDXQTHExchange` now calls `ClearPendingCounties` up front; its DX branch never reaches the clearing code, so a DX call worked immediately after a county-line entry inherited the previous entry's queue.
+- **`PerQSOExchString` emitted `RSTReceived` for every contest** (`MainUnit.pas`). `ExchString` is echoed into the ADIF `SRX_STRING`, so a county-line follow-up on a serial-number contest carried the defaulted 59/599 where the number the station sent belongs. Now a case on `ActiveExchange`.
+- **Incidental:** `QTHString` no longer carries a leading space (the old two-token splitter left `" SLO"` on the record, feeding the Cabrillo `%-6s`), and the RST parser's "Improper Domestic QTH" log line now shows the exchange — it previously logged empty parentheses because `RemoveLastString` had consumed the string before the message was formatted.
 
 ---
 
