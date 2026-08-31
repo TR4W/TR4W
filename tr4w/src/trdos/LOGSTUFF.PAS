@@ -1608,75 +1608,216 @@ begin
 
 end;
 
+{ ---------------------------------------------------------------------------
+  Shared county-line exchange helpers.
+
+  Two exchange parsers accept more than one domestic QTH for a single QSO:
+  ProcessRSTAndDomesticQTHExchange ("599 DAL/BAY") and
+  ProcessQSONumberAndDomesticQTHExchange ("123 SLUI/MONT" - the California and
+  Pennsylvania QSO Party form).  Everything the two share about that lives
+  here so they cannot drift apart: the tokenizer, the domestic-mults probe,
+  and the "first county belongs to this QSO, the rest are queued" rule.
+
+  What they do not share is what a numeric token means - RS(T) for one, the
+  received serial number for the other - so numbers are handed back to the
+  caller instead of being interpreted here.
+
+  Issue #885 (county-line bridging), extended to the serial-number exchanges
+  for CQP 2026.
+  --------------------------------------------------------------------------- }
+
+procedure SplitExchangeIntoNumbersAndDomesticQTHs(Exchange: ShortString;
+  NumericTokens: TStringList; ValidQTHs: TStringList);
+
+{ Classify every token in Exchange as either an all-numeric token or a valid
+  domestic QTH, returning each group in user-typed (left to right) order.
+  Tokens that are neither are discarded.
+
+  All '/' characters are mapped to spaces first, so a county-line exchange may
+  be given either way: "SLUI/MONT" and "SLUI MONT" travel the same code path. }
+
+var
+  TempString                            : Str80;
+  ProbeRX                               : ContestExchange;
+  i                                     : integer;
+
+begin
+  for i := 1 to Length(Exchange) do
+     begin
+     if Exchange[i] = '/' then
+        begin
+        Exchange[i] := ' ';
+        end;
+     end;
+
+  { RemoveLastString returns the rightmost token, so the walk runs right to
+    left; Insert (0, ...) rebuilds user-typed order in both lists. }
+
+  while Exchange <> '' do
+     begin
+     TempString := RemoveLastString(Exchange);
+
+     if TempString = '' then
+        begin
+        Continue;
+        end;
+
+     if StringIsAllNumbers(TempString) then
+        begin
+        NumericTokens.Insert(0, TempString);
+        end
+     else
+        begin
+        { Probe with a scratch ContestExchange so the walk can continue past
+          the first match without disturbing the caller's record -
+          FoundDomesticQTH writes DomMultQTH / DomesticQTH onto whatever
+          record it is handed. }
+
+        FillChar(ProbeRX, SizeOf(ProbeRX), 0);
+        ProbeRX.QTHString := TempString;
+
+        if FoundDomesticQTH(ProbeRX) then
+           begin
+           ValidQTHs.Insert(0, TempString);
+           end;
+        end;
+     end;
+end;
+
+function ApplyFirstQTHAndQueueRest(ValidQTHs: TStringList;
+  var RXData: ContestExchange): boolean;
+
+{ The first valid QTH in user-typed order belongs to the QSO being built: put
+  it on RXData and re-run FoundDomesticQTH against the real record so that
+  DomMultQTH / DomesticQTH carry the canonical name.  Every further QTH is
+  queued for TryLogContact, which drains the queue immediately after writing
+  this QSO and logs one more QSO per queued county - all of them sharing the
+  one transmitted serial number.
+
+  Returns False, with ExchangeErrorMessage set, when the exchange named no
+  recognisable domestic QTH at all.  The caller logs the failure, because the
+  two callers name themselves differently in the log. }
+
+var
+  i                                     : integer;
+
+begin
+  Result := False;
+
+  if ValidQTHs.Count = 0 then
+     begin
+     ExchangeErrorMessage := TC_IMPROPERDOMESITCQTH;
+     Exit;
+     end;
+
+  RXData.QTHString := ValidQTHs[0];
+  Result := FoundDomesticQTH(RXData);
+
+  if not Result then
+     begin
+     ExchangeErrorMessage := TC_IMPROPERDOMESITCQTH;
+     Exit;
+     end;
+
+  for i := 1 to ValidQTHs.Count - 1 do
+     begin
+     QueuePendingCounty(ValidQTHs[i]);
+     end;
+end;
+
 function ProcessQSONumberAndDomesticQTHExchange(Exchange: Str80; var RXData:
   ContestExchange): boolean;
 
-{ If the the two entries are separated by a space, they may appear in either
-  order.  If only one entry appears, it is assumed to be the Domestic QTH
-  and the QSO number will be one.  }
+{ The QSO number and the domestic QTH may appear in either order.
+
+  Multi-county handling: the operator can name more than one county in a
+  single exchange when working a station that bridges a county line -
+
+    "123 SLUI/MONT"   slash-separated
+    "123 SLUI MONT"   space-separated
+    "123SLUI/MONT"    number typed hard against the county, as always
+    "SLUI/MONT 123"   either order
+
+  The first valid county stays with THIS QSO; the rest are pushed onto
+  uPendingCounties so TryLogContact writes one further QSO per county.
+
+  A run of digits is split off as its own token, which reproduces the
+  digit/letter split this function has always performed for "123SLUI".  That
+  split is unambiguous for this exchange: no abbreviation in any domestic file
+  used by the contests that select it (california_cty, pa_cty, va_cty,
+  ukraine, grids) contains a digit. }
 
 var
-  Str1, Str2 {, Str3, Str4}: Str10 {Str20};
-  i: integer;
+  Normalized                            : ShortString;
+  NumericTokens                         : TStringList;
+  ValidQTHs                             : TStringList;
+  ConversionResult                      : integer;
+  i                                     : integer;
+
 begin
-  ProcessQSONumberAndDomesticQTHExchange := False;
-  if length(Exchange) = 0 then
-    Exit;
+  Result := False;
+  ClearPendingCounties;
 
-  Str1 := '';
-  Str2 := '';
-  //  Str3 := '';
-  //  Str4 := '';
-
-  //  NumberString := '';
+  if Length(Exchange) = 0 then
+     begin
+     Exit;
+     end;
 
   RXData.QTHString := '';
 
-  for i := 1 to length(Exchange) - 1 do
-  begin
-    if (tCharIsNumbers(Exchange[i]) <> tCharIsNumbers(Exchange[i + 1])) or
-      (Exchange[i + 1] = ' ') then
-    begin
-      Str1 := Copy(Exchange, 1, i);
-      Break;
-    end;
-  end;
+  { Insert a space at every digit <-> non-digit boundary so the QSO number is
+    its own token even when typed hard against the county.  Separation on
+    spaces and on '/' is handled by the splitter. }
 
-  for i := length(Exchange) downto 2 do
-  begin
-    if (tCharIsNumbers(Exchange[i]) <> tCharIsNumbers(Exchange[i - 1])) or
-      (Exchange[i - 1] = ' ') then
-    begin
-      Str2 := Copy(Exchange, i, 80);
+  Normalized := '';
 
-      // ?
-      // Break;
+  for i := 1 to Length(Exchange) do
+     begin
+     if (i > 1)                                                         and
+        (Exchange[i] <> ' ')                                            and
+        (Exchange[i - 1] <> ' ')                                        and
+        (tCharIsNumbers(Exchange[i]) <> tCharIsNumbers(Exchange[i - 1])) then
+        begin
+        Normalized := Normalized + ' ';
+        end;
 
-    end;
-  end;
+     Normalized := Normalized + Exchange[i];
+     end;
 
-  if Str1 = '' then
-    Exit;
-  if Str2 = '' then
-    Exit;
+  NumericTokens := TStringList.Create;
+  ValidQTHs := TStringList.Create;
 
-  if StringIsAllNumbers(Str1) then
-  begin
-    RXData.NumberReceived := StrToInt(Str1);
-    RXData.QTHString := Str2;
-  end
-  else if StringIsAllNumbers(Str2) then
-  begin
-    RXData.NumberReceived := StrToInt(Str2);
-    RXData.QTHString := Str1;
-  end
-  else
-    Exit;
-  ProcessQSONumberAndDomesticQTHExchange := FoundDomesticQTH(RXData);
-  if not Result then
-  begin
-    ExchangeErrorMessage := TC_IMPROPERDOMESITCQTH;
-    logger.error('[ProcessQSONumberAndDomesticQTHExchange] Improper Domestic QTH');
+  try
+     SplitExchangeIntoNumbersAndDomesticQTHs(Normalized, NumericTokens, ValidQTHs);
+
+     { This exchange is "number and QTH": a bare QTH with no number has always
+       been rejected here, and still is. }
+
+     if NumericTokens.Count = 0 then
+        begin
+        ExchangeErrorMessage := TC_IMPROPERDOMESITCQTH;
+        logger.Error('[ProcessQSONumberAndDomesticQTHExchange] No QSO number in exchange (%s)', [Exchange]);
+        Exit;
+        end;
+
+     Val(NumericTokens[0], RXData.NumberReceived, ConversionResult);
+
+     if ConversionResult <> 0 then
+        begin
+        ExchangeErrorMessage := TC_IMPROPERDOMESITCQTH;
+        logger.Error('[ProcessQSONumberAndDomesticQTHExchange] Bad QSO number (%s)', [NumericTokens[0]]);
+        Exit;
+        end;
+
+     Result := ApplyFirstQTHAndQueueRest(ValidQTHs, RXData);
+
+     if not Result then
+        begin
+        logger.Error('[ProcessQSONumberAndDomesticQTHExchange] Improper Domestic QTH - Exchange = (%s)', [Exchange]);
+        end;
+  finally
+     NumericTokens.Free;
+     ValidQTHs.Free;
   end;
   {
     Exit;
@@ -2218,6 +2359,13 @@ var
 
 begin
   ProcessQSONumberAndDomesticOrDXQTHExchange := False;
+
+  { The DX branch below never queues counties, so clear the queue here
+    rather than only in the domestic branch - otherwise a DX call worked
+    right after a county-line entry would inherit the stale queue. }
+
+  ClearPendingCounties;
+
   if length(Exchange) = 0 then
     Exit;
 
@@ -3443,10 +3591,10 @@ function ProcessRSTAndDomesticQTHExchange(Exchange: ShortString {Str80}; var
   queue and write a separate QSO for each. }
 
 var
-  TempString : Str80;
-  i          : Integer;
-  ProbeRX    : ContestExchange;
-  ValidQTHs  : TStringList;
+  TempString    : Str80;
+  i             : Integer;
+  NumericTokens : TStringList;
+  ValidQTHs     : TStringList;
 
 begin
   ProcessRSTAndDomesticQTHExchange := False;
@@ -3498,68 +3646,54 @@ begin
     Exit;
   end;
 
-  // Multi-token branch.  Walk right-to-left (RemoveLastString returns the
-  // rightmost token).  Numeric tokens become RST.  Probe every other token
-  // against the domestic-mults table and collect every match in a list,
-  // preserving user-typed order via Insert(0, ...).
+  { Multi-token branch.  The tokenizing, the domestic-mults probe and the
+    "first county belongs to this QSO, the rest are queued" rule are shared
+    with ProcessQSONumberAndDomesticQTHExchange - see the helpers above.
+    Here a numeric token is the RS(T). }
+
+  NumericTokens := TStringList.Create;
   ValidQTHs := TStringList.Create;
+
   try
-    while Exchange <> '' do
-    begin
-      TempString := RemoveLastString(Exchange);
-      if TempString = '' then
-        Continue;
+     SplitExchangeIntoNumbersAndDomesticQTHs(Exchange, NumericTokens, ValidQTHs);
 
-      if StringIsAllNumbers(TempString) and (RXData.RSTReceived = 0) then
-      begin
-        if length(TempString) = 1 then
+     { The rightmost numeric token is the RS(T).  That is what the previous
+       right-to-left walk selected: it took the first number it met, and its
+       "RSTReceived = 0" guard stopped any further number overwriting it.
+       The guard is kept here for the same reason - an RS(T) already on the
+       record is left alone. }
+
+     if (NumericTokens.Count > 0) and (RXData.RSTReceived = 0) then
         begin
-          case ActiveMode of
-            CW    : RXData.RSTReceived := 509 + (Ord(TempString[1]) - 48) * 10;
-            Phone : RXData.RSTReceived := 50  + (Ord(TempString[1]) - 48);
-          end;
-        end
+        TempString := NumericTokens[NumericTokens.Count - 1];
+
+        if Length(TempString) = 1 then
+           begin
+           case ActiveMode of
+             CW    : RXData.RSTReceived := 509 + (Ord(TempString[1]) - 48) * 10;
+             Phone : RXData.RSTReceived := 50  + (Ord(TempString[1]) - 48);
+           end;
+           end
         else
-          RXData.RSTReceived := StrToInt(TempString);
-      end
-      else
-      begin
-        // Probe with a scratch ContestExchange so we can keep walking after
-        // the first match.  FoundDomesticQTH writes DomMultQTH/DomesticQTH
-        // on the record passed in; we only want to update the real RXData
-        // once, with the first user-typed QTH.
-        FillChar(ProbeRX, SizeOf(ProbeRX), 0);
-        ProbeRX.QTHString := TempString;
-        if FoundDomesticQTH(ProbeRX) then
-          ValidQTHs.Insert(0, TempString);  // user-typed order
-      end;
-    end;
+           begin
+           RXData.RSTReceived := StrToInt(TempString);
+           end;
+        end;
 
-    if ValidQTHs.Count = 0 then
-    begin
-      logger.error('[ProcessRSTAndDomesticQTHExchange] Improper Domestic QTH - Exchange = (%s)', [Exchange]);
-      ExchangeErrorMessage := TC_IMPROPERDOMESITCQTH;
-      Exit;
-    end;
+     if RXData.RSTReceived = 0 then
+        begin
+        RXData.RSTReceived := DefaultRST;
+        end;
 
-    // First valid QTH (in user-typed order) is for this QSO.  Re-run
-    // FoundDomesticQTH against the real RXData to populate DomMultQTH /
-    // DomesticQTH from the canonical name.
-    RXData.QTHString := ValidQTHs[0];
-    FoundDomesticQTH(RXData);
+     Result := ApplyFirstQTHAndQueueRest(ValidQTHs, RXData);
 
-    if RXData.RSTReceived = 0 then
-      RXData.RSTReceived := DefaultRST;
-
-    // Queue any additional valid QTHs.  TryLogContact will drain the queue
-    // immediately after writing the QSO above, logging one extra QSO per
-    // queued county.
-    for i := 1 to ValidQTHs.Count - 1 do
-      QueuePendingCounty(ValidQTHs[i]);
-
-    ProcessRSTAndDomesticQTHExchange := True;
+     if not Result then
+        begin
+        logger.Error('[ProcessRSTAndDomesticQTHExchange] Improper Domestic QTH - Exchange = (%s)', [Exchange]);
+        end;
   finally
-    ValidQTHs.Free;
+     NumericTokens.Free;
+     ValidQTHs.Free;
   end;
 end;
 
