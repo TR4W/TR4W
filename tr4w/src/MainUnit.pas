@@ -556,12 +556,28 @@ end;
 //
 // Issue #885 (county lines) and POTA Nfer.
 
-// Build the per-QSO exchange string in <RST> <QTH> form so each multi-ref
-// QSO gets its own ADIF SRX_STRING instead of the combined original input.
-// Issue #889.
+// Build the per-QSO exchange string so each multi-ref QSO gets its own ADIF
+// SRX_STRING instead of the combined original input.  Issue #889.
+//
+// The leading field has to match what the operator actually typed for this
+// exchange, because ExchString is echoed into SRX_STRING: the serial-number
+// exchanges (CQP, PA and VA QSO Parties) carry a received QSO number where
+// the RST exchanges carry an RS(T).  Emitting the RST for a serial-number
+// contest would put the defaulted 599 into the log in place of the number
+// the station sent.
 function PerQSOExchString(const RXData: ContestExchange): string;
 begin
-  Result := IntToStr(RXData.RSTReceived) + ' ' + string(RXData.QTHString);
+  case ActiveExchange of
+    QSONumberDomesticQTHExchange,
+    QSONumberDomesticOrDXQTHExchange:
+       begin
+       Result := IntToStr(RXData.NumberReceived) + ' ' + string(RXData.QTHString);
+       end;
+  else
+    begin
+    Result := IntToStr(RXData.RSTReceived) + ' ' + string(RXData.QTHString);
+    end;
+  end;
 end;
 
 procedure DrainPendingMultiQSORefs;
