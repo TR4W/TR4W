@@ -47,6 +47,7 @@ ct1enq.myvnc.com:35000
 cu3hy.mikemaciel.com:7300
 cx2sa.net:7300
 dx.da0bcc.de:7300
+dxcluster.afu-tools.de:7301
 44.149.66.194:7300
 db0erf.de:7300
 db0fhn.efi.fh-nuernberg.de:7300
@@ -108,6 +109,7 @@ ea5urm.dns2go.com:7000
 65.21.110.171:7300
 dxmaps.com:7300
 dx.ea7jxh.eu:7300
+dx.ea7jxh.eu:7600
 dx.ea7urm.org:8000
 ea8url.ddns.net:7300
 dx.ed1zac.net:8000
@@ -332,6 +334,7 @@ dx-cluster.com:8877
 dxspider.jk1zrw.org:7300
 abuail.ddo.jp:7300
 ja3azd.dyndns.org:9000
+dxcluster.k0mvh.io:7300
 pi.k0pir.us:7300
 k0wl.ddns.net:7373
 dxc.k0xm.net:7300
@@ -352,7 +355,7 @@ dxc.k4fx.net:7300
 dxc.k4gso.com:7373
 k4jw.no-ip.com:41414
 dxc.k4kyd.com:7300
-k4md.no-ip.com
+cdxa.no-ip.org:7375
 cluster-us.dx-is.com:7300
 cluster-eu.dx-is.com:7300
 k4zr.no-ip.org:7300
