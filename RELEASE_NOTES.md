@@ -11,7 +11,7 @@ This is the user-facing changelog — it covers what changed, what was fixed, an
 | Call | GitHub | Commits |
 |--------|--------|---------|
 | N4AF — Howie Hoyt | [@n4af](https://github.com/n4af) | 346 |
-| NY4I — Tom Schaefer | [@ny4i](https://github.com/ny4i) | 732 |
+| NY4I — Tom Schaefer | [@ny4i](https://github.com/ny4i) | 769 |
 | GM0GAV — Gavin Taylor | [@gm0gav](https://github.com/gm0gav) | 12 |
 | K0TI — Dan | [@Dan-K0TI](https://github.com/Dan-K0TI) | 10 |
 | Vojtěch Šádek | [@vksadek](https://github.com/vksadek) | 1 |
@@ -46,9 +46,9 @@ _Nothing yet._
 
 ---
 
-## 4.150.x — August 2026
+## 4.151.x — September 2026
 
-### 4.150.1 (2026-08-31) — NY4I
+### 4.151.0 (2026-09-04) — NY4I
 
 #### California QSO Party
 
@@ -57,6 +57,8 @@ _Nothing yet._
 - The same applies to the Pennsylvania and Virginia QSO Parties, which use the same serial-number-and-county exchange. County-line entry in the RST-style QSO parties (Florida, Texas, Michigan and the rest) is unchanged.
 
 ---
+
+## 4.150.x — August 2026
 
 ### 4.150.0 (2026-08-02) — NY4I
 
