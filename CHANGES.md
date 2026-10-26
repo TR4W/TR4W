@@ -35,6 +35,17 @@ _Nothing yet._
 
 ---
 
+## 4.152.x — October 2026
+
+### 4.152.0 (2026-10-25) — NY4I
+
+#### Start-up — Windows 7 crash in `GetWindowsBuildDetail` (`src/GetWinVersionInfo.pas`) — PR #1086
+
+- **`ReadInteger('UBR')` raised on Windows 7.** `UBR` and `DisplayVersion` under `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion` exist only on Windows 10+. `TRegistry.ReadString` returns `''` for a missing value, but `ReadInteger` raises `ERegistryException` ("Failed to get data for 'UBR'"). The only caller is the start-up `logger.debug` line in `tr4w.dpr`, whose arguments are evaluated at every log level, so the exception aborted start-up. Broken since 4.147.17 (60620b25, #674/#768). Reported by EI3CTB.
+- **Fix:** each value is checked with `ValueExists` before it is read, and the `.UBR` suffix is appended only when present. Windows 10/11 output is unchanged; Windows 7 logs e.g. `(Build 7601)`. This was the only `ReadInteger`-style registry read in tr4w or tr4wserver.
+
+---
+
 ## 4.150.x — August 2026
 
 ### 4.150.1 (2026-08-31) — NY4I

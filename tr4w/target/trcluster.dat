@@ -79,7 +79,8 @@ e73du.no-ip.org:7300
 e74c.hopto.org:7373
 e79ztb.dyndns.org:7300
 ea1cyz.niab.es:9000
-ea1dx.lynxdxg.com
+ea1dx.lynxdxg.com:7373
+cluster.redsinhilos.com:7300
 144.76.109.18:7300
 ea1hg.duckdns.org:7300
 ea1ign.ddns.net:7300
@@ -189,7 +190,7 @@ spider.hb9on.net:8000
 78.47.138.186:7300
 dxcluster.hb9vqq.ch:7300
 85.90.180.26:8000
-dxc-hi3r.ddns.net:7300
+dxc-hi3r.manyanadx.org:7300
 hi8s.cx2sa.net:7300
 hs0zer.no-ip.com:9000
 cluster.i0inu.it:7300
@@ -244,6 +245,7 @@ iq8do.aricaserta.it:7300
 iq8pq.aripozzuoli.com:9000
 iq8rb.rblob.com:8000
 79.9.210.9:7300
+ir0uao.homepc.it:7300
 ir2ugi.dyndns.org:50000
 ir3dxc.net:41112
 ir4ad.tzo.com
@@ -258,7 +260,7 @@ ir9esi.dyndns.org:7373
 is0grb.it:41112
 it9ftp.ydns.eu:7300
 217.182.156.145:7300
-176.31.78.106:7300
+217.182.156.144:7300
 it9obk.org:41112
 it9wdy-6.dyndns.org:41112
 dxcluster.iu1bow.it:7300
@@ -268,6 +270,8 @@ cluster.iu3cyv.eu:7300
 44.31.102.132:7300
 44.31.102.250:7300
 iv3yxw.dyndns.org:8000
+iw0erq.dyndns.org:9000
+iw0erq.dyndns.org:8000
 44.3.118.196:7300
 iw0qnlserver.ns0.it:9002
 iw1psc-6.ddns.net:8000
@@ -281,7 +285,7 @@ iw2noy.ddns.net:7300
 dx.iw3fvz.it:8000
 ham.homelinux.org:8000
 spider.iw8pgt.org:8500
-it9ijy.duckdns.org:7300
+cluster.it9ijy.it:7300
 iw9fdd.homeip.net:7300
 dxspider.iw9fra.com:7300
 clx.iw9gtd.it:7300
@@ -293,6 +297,7 @@ dxc.noantri.org
 spider.noantri.org:7000
 iz0ort.ddns.net:8500
 iz0ort.ddns.net:9000
+iz0ort.ddns.net:7300
 dxcluster.iz0tws.com:7300
 iz0uin.remoteip.org:7300
 dx.iz1cqn.it:8000
@@ -439,6 +444,7 @@ n2fjdx.no-ip.org
 dxc.n2ki.com:7300
 dxc.n2wls.com:7300
 cluster.n2wq.com:7373
+dxc.n2wq.com:8300
 dxc.n2yo.net:7300
 n3bsq.ddns.net:7300
 n3hym.ddns.net:7373
@@ -462,7 +468,6 @@ n8dxe.dxengineering.com
 n8dxe.dxengineering.com:7373
 76.236.93.115:7300
 n8nm.servebeer.com
-dx.n8noe.us
 n8ux.ddns.net:7373
 n8yib.dyndns.org
 n9ai.ddns.net:7373
@@ -477,6 +482,7 @@ nd4x.com:7373
 nl7s.net:8000
 k1rfi.com:7300
 dxc.np3n.com:7300
+cluster.np3n.com:7300
 nr1x.budlog.net:7300
 NU1G-1.NET:7300
 dxc.f2f.us:7300
@@ -500,7 +506,7 @@ dxl.radioclubleuven.be:7300
 on2vhf.ddns.net:7300
 dxspider.on3ure.be:7300
 on3vhf.no-ip.org:8000
-141.94.171.16:7300
+www.on4kst.info:7300
 on4kvi.dyndns.org:7300
 on4ll.ddns.net:7300
 151.80.57.37:7300
@@ -569,6 +575,7 @@ riksnet.sector7.nu:8000
 dxc.sm7iun.se:7300
 dxc.sm7iun.se
 dxc.sm7iun.se:7373
+dxc.sm7iun.se:8000
 174.93.153.212
 sp6xd.weles.pro:7300
 www.sp7ydd.ampr.org:9000
@@ -593,6 +600,7 @@ dxc.sv9djo.eu:7300
 svforum.synology.me:7300
 it9ftp.ydns.eu:7300
 home.kayhan.name.tr:7300
+cluster.ta7ohm.tr:7300
 tf1mt.motiff.net:7300
 tr8ca.no-ip.org:9000
 ua0apv.i234.me:7300
@@ -658,7 +666,7 @@ w3gq.no-ip.com:7373
 dxc.w3lpl.net
 dxc.w3lpl.net:7373
 w3nr.ddns.net:7300
-w3rga.ddns.net:7373
+dxc.w3rga.com:7373
 w4dxa.no-ip.com
 204.29.106.100
 w4mr.ddns.net:7373

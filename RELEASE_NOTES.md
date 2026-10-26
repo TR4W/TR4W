@@ -36,6 +36,16 @@ _Nothing yet._
 
 ---
 
+## 4.152.x — October 2026
+
+### 4.152.0 (2026-10-25) — NY4I
+
+#### Windows 7
+
+- **TR4W starts on Windows 7 again.** Since 4.147.17, TR4W stopped at start-up on Windows 7 with "Exception ERegistryException ... Failed to get data for 'UBR'". It was looking for a Windows version detail that only Windows 10 and later have. It now skips any detail that isn't there. Nothing changes on Windows 10 or 11. Thanks to EI3CTB for the report.
+
+---
+
 ## 4.150.x — August 2026
 
 ### 4.150.1 (2026-08-31) — NY4I
