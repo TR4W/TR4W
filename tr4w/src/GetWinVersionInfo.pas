@@ -413,25 +413,40 @@ begin
   end;{ OSVI_NT.dwPlatformId }
 end;{ GetOSInfo }
 
+{ Diagnostic detail only - must never raise. Each value is checked first:
+  UBR and DisplayVersion do not exist before Windows 10, and
+  TRegistry.ReadInteger raises ERegistryException on a missing value
+  (ReadString returns ''). An unguarded read crashed start-up on Windows 7. }
 function GetWindowsBuildDetail: string;
 const
   REG_KEY = 'SOFTWARE\Microsoft\Windows NT\CurrentVersion';
 var
   Reg: TRegistry;
   sDisplay, sBuild: string;
-  nUBR: integer;
 begin
   Result := '';
+  sDisplay := '';
+  sBuild := '';
   Reg := TRegistry.Create;
   try
     Reg.RootKey := HKEY_LOCAL_MACHINE;
     if Reg.OpenKeyReadOnly(REG_KEY) then
        begin
        try
-         sDisplay := Reg.ReadString('DisplayVersion');
-         sBuild   := Reg.ReadString('CurrentBuildNumber');
-         nUBR     := Reg.ReadInteger('UBR');
-         Result   := sDisplay + ' (Build ' + sBuild + '.' + IntToStr(nUBR) + ')';
+         if Reg.ValueExists('DisplayVersion') then
+            begin
+            sDisplay := Reg.ReadString('DisplayVersion');
+            end;
+         if Reg.ValueExists('CurrentBuildNumber') then
+            begin
+            sBuild := Reg.ReadString('CurrentBuildNumber');
+            end;
+         Result := sDisplay + ' (Build ' + sBuild;
+         if Reg.ValueExists('UBR') then
+            begin
+            Result := Result + '.' + IntToStr(Reg.ReadInteger('UBR'));
+            end;
+         Result := Result + ')';
        finally
          Reg.CloseKey;
        end;
