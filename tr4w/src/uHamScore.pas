@@ -154,6 +154,10 @@ procedure HamScoreOnDelete(const RXData: ContestExchange);
 // every QSO from the current binary log file.
 procedure HamScoreResyncFromScratch;
 
+// Wake the uploader for an immediate cycle instead of waiting up to two
+// minutes.  No-op when the uploader is not running.
+procedure HamScorePushNow;
+
 // Phase 4 -- HamScore status window dialog procedure.  Wired into
 // tr4w_WindowsArray[tw_HAMSCOREWINDOW_INDEX].WndProcAdr by MainUnit.
 function HamScoreDlgProc(hwnddlg: HWND; Msg: UINT; wParam: wParam; lParam: lParam): BOOL; stdcall;
@@ -890,6 +894,14 @@ begin
   Uploader.Enqueue(TRTCContact.Create(rckDeleteLog, '', RenderDeleteLogBody));
 end;
 
+procedure HamScorePushNow;
+begin
+   if Uploader <> nil then
+      begin
+      Uploader.PushNow;
+      end;
+end;
+
 // ===========================================================================
 // Phase 4 -- HamScore status dialog
 // ===========================================================================
@@ -1128,14 +1140,9 @@ begin
 
           HAMSCORE_BTN_RESYNC:
             begin
-              // Tools-menu equivalent inline; calls into the same helpers.
-              // (We cannot pull SendFullLogToHamScore from here without a
-              // circular reference, so the resync button only enqueues the
-              // <deletelog>; user should also use Tools menu Resync to
-              // walk the full log.  Documented in the help dialog later.)
-              HamScoreResyncFromScratch;
-              SetTextSafe(hwnddlg, HAMSCORE_EDIT_STATUS_VAL,
-                '<deletelog> queued -- use Tools menu Resync to enqueue all QSOs');
+              // Run the Tools-menu command itself so there is one resync path.
+              // Queueing only the <deletelog> here left the server log empty.
+              ProcessMenu(menu_hamscore_resync);
             end;
         end;
         if HiWord(wParam) = BN_CLICKED then FrmSetFocus;

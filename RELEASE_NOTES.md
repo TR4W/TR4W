@@ -32,7 +32,11 @@ version number is assigned later, when a release is cut. To cut a release: renam
 user-facing — no file paths or source-level jargon.
 -->
 
-_Nothing yet._
+#### HamScore
+
+- **The Resync from log button in the HamScore RTC Status window no longer wipes your HamScore log.** Before, it deleted your log on the HamScore server without re-sending your QSOs. It now does the same as **Tools | HamScore: Resync log from scratch**: delete, then re-send every QSO from your TR4W log.
+- **A resync starts sending immediately** instead of waiting up to 2 minutes. Keep TR4W open until Queued contacts in the status window reaches 0.
+- Resync still deletes your HamScore log before re-sending, so use it only when your HamScore score doesn't match your log.
 
 ---
 

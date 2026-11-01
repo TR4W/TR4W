@@ -31,7 +31,12 @@ rename this "## Unreleased" to "### X.X.X (YYYY-MM-DD) — HANDLE", move it unde
 appropriate "## 4.147.x" month group below, and bump tr4w/src/Version.pas to match.
 -->
 
-_Nothing yet._
+#### HamScore — Resync button no longer empties the server log (`src/uHamScore.pas`, `src/MainUnit.pas`) — Issue #783
+
+- **The status window's "Resync from log" button queued only the `<deletelog>`.** It called `HamScoreResyncFromScratch` and never `SendFullLogToHamScore`, so one click deleted the operator's HamScore log and re-sent nothing. Its own comment said so and pointed the operator to the Tools menu. The Tools item (`menu_hamscore_resync`) did both.
+- **One resync path.** The button now calls `ProcessMenu(menu_hamscore_resync)`, so it runs the same handler as **Tools | HamScore: Resync log from scratch**. Its hardcoded status text is gone; the window's 1-second refresh shows the queue and the result.
+- **The resync sends at once.** New `HamScorePushNow` wakes the uploader (no-op when it is not running), and the Tools handler calls it after queueing the log. Before, nothing was sent until the next 2-minute cycle, or at all if TR4W was closed first. Same fix as the 5.x tree's `1498de12`.
+- **Still deletes first.** The 5.x tree's Re-send only / Delete and re-send / Cancel dialog (`ae0e01f8`) needs resource changes and is not ported.
 
 ---
 
