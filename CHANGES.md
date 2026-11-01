@@ -31,6 +31,14 @@ rename this "## Unreleased" to "### X.X.X (YYYY-MM-DD) — HANDLE", move it unde
 appropriate "## 4.147.x" month group below, and bump tr4w/src/Version.pas to match.
 -->
 
+_Nothing yet._
+
+---
+
+## 4.152.x — October 2026
+
+### 4.152.1 (2026-11-01) — NY4I
+
 #### HamScore — Resync button no longer empties the server log (`src/uHamScore.pas`, `src/MainUnit.pas`) — Issue #783
 
 - **The status window's "Resync from log" button queued only the `<deletelog>`.** It called `HamScoreResyncFromScratch` and never `SendFullLogToHamScore`, so one click deleted the operator's HamScore log and re-sent nothing. Its own comment said so and pointed the operator to the Tools menu. The Tools item (`menu_hamscore_resync`) did both.
@@ -38,9 +46,12 @@ appropriate "## 4.147.x" month group below, and bump tr4w/src/Version.pas to mat
 - **The resync sends at once.** New `HamScorePushNow` wakes the uploader (no-op when it is not running), and the Tools handler calls it after queueing the log. Before, nothing was sent until the next 2-minute cycle, or at all if TR4W was closed first. Same fix as the 5.x tree's `1498de12`.
 - **Still deletes first.** The 5.x tree's Re-send only / Delete and re-send / Cancel dialog (`ae0e01f8`) needs resource changes and is not ported.
 
----
+#### Configuration — Ctrl-J saved passwords as literal asterisks (`src/uOption.pas`)
 
-## 4.152.x — October 2026
+- **`SaveValue2` writes the row's displayed text to the INI.** A `ctPassword` row displays `PASSWORD_MASK` while "Show passwords" is off, so editing HAMSCORE PASSWORD (or a radio network or SERVER PASSWORD) in Ctrl-J set the right value for the session and saved `********`. The next start used the asterisks and the connection failed. `ChangeValue2` already refused to store the mask in memory; the save path did not.
+- **Fix:** for a `ctPassword` row in the commands list, `SaveValue2` writes the stored value instead, in plain text like the passwords the radio settings dialog saves (`uCAT.pas`). Masking in the list is unchanged. An INI that already holds asterisks needs the password entered once more.
+
+---
 
 ### 4.152.0 (2026-10-25) — NY4I
 
