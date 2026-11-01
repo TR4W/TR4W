@@ -4082,6 +4082,7 @@ begin
       QuickDisplay('HamScore: queueing full log resync...');
       HamScoreResyncFromScratch;       // enqueue <deletelog>
       SendFullLogToHamScore;           // enqueue every QSO from the binary log
+      HamScorePushNow;                 // send now, not at the next 2-minute cycle
       end;
 
     menu_spmode_ortab:
