@@ -793,6 +793,7 @@ var
   Index                                 : integer;
   p                                     : PChar;
   lpAppName                             : PChar;
+  PasswordValue                         : string;
 begin
   Changed[Row] := False;
   Index := IndexArray[Row + 1];
@@ -801,6 +802,16 @@ begin
   // the VALUE_FIELD ListView_GetItemText -> test that result directly.
   if ListView_GetItemText(SettingshLV, Row, VALUE_FIELD, @TempBuffer2, SizeOf(TempBuffer2)) = 0 then
      goto NoText;
+
+  // A password row displays PASSWORD_MASK, so saving the displayed text
+  // wrote literal asterisks to the INI.  Save the stored value instead,
+  // in plain text like every other password in the INI.
+  if (CommandsFilter = cfAll) and
+     (CFGCA[Index].crType = ctPassword) then
+     begin
+     PasswordValue := pShortString(CFGCA[Index].crAddress)^;
+     Windows.lstrcpyn(TempBuffer2, PChar(PasswordValue), SizeOf(TempBuffer2));
+     end;
 
   p := TR4W_INI_FILENAME;
   lpAppName := _COMMANDS;
