@@ -43,6 +43,7 @@ _Nothing yet._
 
 - **Regenerated `TRMASTER.DTA`** with the offline builder (`tr4w/tools/trmaster/build_trmaster.cmd`: SCP sources + CWops/FOC + QRZ name backfill).
 - **Refreshed `CTY.DAT`** (country/prefix database read by `uCTYDAT.pas`) from the current upstream file.
+- **Refreshed `TRCLUSTER.DAT`** (DX-cluster telnet host list) from dxcluster.info.
 - Data-only monthly release; no source changes. `Version.pas` bumped to 4.153.0 (`November, 2026`).
 
 ---

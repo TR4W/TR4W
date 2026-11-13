@@ -44,6 +44,7 @@ _Nothing yet._
 
 - **Updated callsign database (TRMASTER.DTA).** Super Check Partial suggestions and operator names reflect the latest callsign data.
 - **Updated country file (CTY.DAT).** New and changed prefixes now resolve to the right country, zone and continent.
+- **Updated DX cluster list (TRCLUSTER.DAT).** The built-in list of DX cluster servers is current.
 - This release contains no program changes.
 
 ---
