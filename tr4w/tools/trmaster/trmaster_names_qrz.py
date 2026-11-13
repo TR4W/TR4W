@@ -348,9 +348,14 @@ def main(argv=None):
                 new_lookups += 1
             try:
                 nm = client.name(call)
-            except Exception as e:   # network/API hiccup: stop, keep what we have
-                log(f"  stopping at {call}: {e}")
-                break
+            except Exception as e:   # network/API hiccup: stop LIVE lookups only
+                # Do NOT break: calls with a fresh cache entry still need no network,
+                # and breaking here silently dropped every cached name sorted after
+                # the failing call (4.153.0 shipped 26k names instead of 64k).
+                log(f"  live QRZ lookups disabled at {call}: {e}")
+                log("  continuing cache-only so cached names are still emitted")
+                args.cache_only = True
+                continue
             nm = ascii_fold(nm)
             if nm:
                 rows.append((call, nm))
