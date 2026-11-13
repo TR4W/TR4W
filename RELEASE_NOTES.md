@@ -38,6 +38,15 @@ _Nothing yet._
 
 ## 4.153.x — November 2026
 
+### 4.153.1 (2026-11-12) — NY4I
+
+#### Super Check Partial
+
+- **Fixed the callsign database shipped in 4.153.0.** It was missing about 37,000 operator names, so Super Check Partial showed far fewer names than usual. This release restores them, filters out junk entries (calls and abbreviations that had been stored as names), and adds grid squares for about 63,000 callsigns.
+- If you installed 4.153.0, update to this release. This release contains no program changes.
+
+---
+
 ### 4.153.0 (2026-11-12) — NY4I
 
 #### Callsign and Country Data

@@ -37,6 +37,16 @@ _Nothing yet._
 
 ## 4.153.x — November 2026
 
+### 4.153.1 (2026-11-12) — NY4I
+
+#### Super Check Partial database fix (`tr4w/target/TRMASTER.DTA`, `tr4w/tools/trmaster/trmaster_names_qrz.py`)
+
+- **Replaced the 4.153.0 `TRMASTER.DTA`**, which had lost about 37k operator names (64,255 -> 26,647). The QRZ name pass hit a session error at the first stale call (`3W1T`) and `break`-ed out of the candidate loop, so every cached name sorted after it was dropped. The build still exited 0 and passed its structural validation.
+- **Fix:** a live-lookup failure now switches the rest of the run to cache-only instead of stopping, so cached names are still emitted.
+- **Data source:** this file is the d12 builder's output (junk-name filter, issue 239; grid and ARRL section from QRZ, `303f1b21`), 67,214 calls with grids for about 63k of them. Data-only release; no application changes.
+
+---
+
 ### 4.153.0 (2026-11-12) — NY4I
 
 #### Data refresh (`tr4w/target/TRMASTER.DTA`, `tr4w/target/CTY.DAT`)
