@@ -36,6 +36,18 @@ _Nothing yet._
 
 ---
 
+## 4.153.x — November 2026
+
+### 4.153.0 (2026-11-12) — NY4I
+
+#### Callsign and Country Data
+
+- **Updated callsign database (TRMASTER.DTA).** Super Check Partial suggestions and operator names reflect the latest callsign data.
+- **Updated country file (CTY.DAT).** New and changed prefixes now resolve to the right country, zone and continent.
+- This release contains no program changes.
+
+---
+
 ## 4.152.x — October 2026
 
 ### 4.152.1 (2026-11-01) — NY4I

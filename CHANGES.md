@@ -35,6 +35,18 @@ _Nothing yet._
 
 ---
 
+## 4.153.x — November 2026
+
+### 4.153.0 (2026-11-12) — NY4I
+
+#### Data refresh (`tr4w/target/TRMASTER.DTA`, `tr4w/target/CTY.DAT`)
+
+- **Regenerated `TRMASTER.DTA`** with the offline builder (`tr4w/tools/trmaster/build_trmaster.cmd`: SCP sources + CWops/FOC + QRZ name backfill).
+- **Refreshed `CTY.DAT`** (country/prefix database read by `uCTYDAT.pas`) from the current upstream file.
+- Data-only monthly release; no source changes. `Version.pas` bumped to 4.153.0 (`November, 2026`).
+
+---
+
 ## 4.152.x — October 2026
 
 ### 4.152.1 (2026-11-01) — NY4I
