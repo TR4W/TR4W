@@ -87,6 +87,7 @@ ea1ign.ddns.net:7300
 campelo.cdf.udc.es:8000
 cluster.gautxori.com:7300
 cluster.gautxori.com:7373
+57.129.71.248:7300
 rcfcloud.dyndns.org:7300
 141.94.69.166:7300
 dx.ea2urv.com:7300
@@ -259,6 +260,7 @@ ir8aw.dyndns.org:7300
 ir9esi.dyndns.org:7373
 is0grb.it:41112
 it9ftp.ydns.eu:7300
+dxspiderweb.it9ijy.it:7300
 217.182.156.145:7300
 217.182.156.144:7300
 it9obk.org:41112
@@ -280,7 +282,6 @@ cluster.hrdlog.net:7373
 danilo.selfip.info:7300
 1972.dyndns.tv:7300
 www.dxcluster.world
-0.0.0.0:0
 iw2noy.ddns.net:7300
 dx.iw3fvz.it:8000
 ham.homelinux.org:8000
@@ -309,7 +310,6 @@ cluster.iz3mez.it:8000
 Iz4gjj.ns0.it:7300
 31.185.17.208:8000
 iz5ilu.ns0.it:7300
-79.23.57.37:0
 iz6fzs.dyndns.org:9000
 217.61.13.91:7300
 dx.iz7auh.net:8000
@@ -370,7 +370,8 @@ dxc.k5tl.com
 dx.k6jwn.org:7300
 k6koz.serveftp.com:7300
 k7ar.net:7374
-k7tj.ewarg.org:7300
+k7co.net:7373
+dxc.ewarg.org:7373
 cluster.dxworld.info:8000
 dxc.k9aj.net
 k9lc.ddns.net:7300
@@ -395,11 +396,11 @@ kc5nyo.dns2go.com
 dxspots.kc9aop.net:7300
 104.234.133.51:7300
 kd4gca.dyndns.org:7300
+dx.kd5ycy.com:7300
 dx.scarcnj.org:7300
 ke2oi.dyndns.org:7300
 themaincomputer.net:7300
 KF4LLF.no-IP.org:7300
-217.180.211.244:7300
 217.180.211.244:7300
 dxfinder.bfielding.com:7300
 98.181.43.23:7300
@@ -464,8 +465,8 @@ n7od.pentux.net:7300
 dxc.n7tr.com:7300
 dxc.n7tr.com:7373
 n7xg.ddns.net:7300
-n8dxe.dxengineering.com
-n8dxe.dxengineering.com:7373
+dx.n8dxe.net
+dx.n8dxe.net:7373
 76.236.93.115:7300
 n8nm.servebeer.com
 n8ux.ddns.net:7373
@@ -477,7 +478,6 @@ uronode.n9lya.ampr.org:7300
 N9PMO.NO-IP.ORG:7373
 na7kr.na7kr.us:9000
 dxc.nc7j.com:7373
-dxc.nc7j.com:7374
 nd4x.com:7373
 nl7s.net:8000
 k1rfi.com:7300
@@ -583,7 +583,7 @@ www.sp7ydd.ampr.org:9000
 dxcluster.sq3mzm.ovh:7300
 www.sr1bsz.ampr.org:9000
 klub.sp2put.pl:7300
-dx.jestok.com:7300
+dxcluster.pl:7300
 78.8.39.233:9000
 78.10.234.200:9100
 www.sr8bbs.ampr.org:9000
@@ -680,6 +680,7 @@ w6kk.zapto.org:7300
 ucsbdx.ece.ucsb.edu:7300
 76.103.23.126
 ch.w6rk.com:7300
+DXC.W7CT.COM:7373
 k7ek.ddns.net:9000
 24.113.3.3:7300
 w8aef.ddns.net:7373
